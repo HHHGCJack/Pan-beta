@@ -231,20 +231,6 @@ export const Navbar: React.FC = () => {
   const [mobileExpandedCategories, setMobileExpandedCategories] = useState<Record<number, boolean>>({});
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-  useEffect(() => {
-    if (mobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
-  }, [mobileMenuOpen]);
-
   const langTimeoutRef = React.useRef<any>(null);
   const navTimeoutRef = React.useRef<any>(null);
 
@@ -691,15 +677,11 @@ export const Navbar: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className="lg:hidden fixed top-0 bottom-0 left-0 right-0 w-screen h-[100dvh] min-h-[100dvh] z-40 overflow-hidden"
-            style={{
-              height: '100dvh',
-              minHeight: '-webkit-fill-available'
-            }}
+            className="lg:hidden fixed inset-0 z-40 overflow-hidden"
           >
             {/* Backdrop Dimmer Overlay */}
             <div 
-              className={`absolute inset-0 w-full h-full ${themeMode === 'dark' ? 'bg-black/60' : 'bg-black/30'}`}
+              className={`absolute inset-0 ${themeMode === 'dark' ? 'bg-black/40' : 'bg-black/15'}`}
               onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -710,16 +692,11 @@ export const Navbar: React.FC = () => {
               animate={{ y: 0 }}
               exit={{ y: -10 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className={`relative w-full h-full min-h-[100dvh] pt-20 px-6 overflow-y-auto scrollbar-hide overscroll-contain transform-gpu ${
+              className={`relative h-full pt-20 px-6 overflow-y-auto scrollbar-hide overscroll-contain transform-gpu ${
                 themeMode === 'dark'
-                  ? 'bg-[#0d0d10] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
-                  : 'bg-[#f6f7fa] text-gray-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9)]'
+                  ? 'bg-[#0d0d10]/85 backdrop-blur-[28px] backdrop-saturate-[200%] text-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.1)]'
+                  : 'bg-white/80 backdrop-blur-[28px] backdrop-saturate-[180%] text-gray-900 shadow-[inset_0_1px_2px_rgba(255,255,255,0.9)]'
               }`}
-              style={{
-                height: '100dvh',
-                minHeight: '-webkit-fill-available',
-                paddingBottom: 'calc(env(safe-area-inset-bottom, 24px) + 6rem)'
-              }}
             >
               <div className="flex flex-col pb-16">
                 {isShowcasePage && (
