@@ -126,7 +126,7 @@ export const Home: React.FC = () => {
               disabled={!pansouActive}
               onClick={!pansouActive ? (e) => {
                 e.preventDefault();
-                openProductNotice?.(t.pansou.title);
+                openProductNotice?.(t.pansou.title, undefined, 'pansou');
               } : undefined}
             />
           </div>
@@ -144,7 +144,7 @@ export const Home: React.FC = () => {
               disabled={!readingProActive}
               onClick={!readingProActive ? (e) => {
                 e.preventDefault();
-                openProductNotice?.(t.readingPro.title);
+                openProductNotice?.(t.readingPro.title, undefined, 'reading-pro');
               } : undefined}
             />
           </div>
@@ -162,7 +162,7 @@ export const Home: React.FC = () => {
               disabled={!aiActive}
               onClick={!aiActive ? (e) => {
                 e.preventDefault();
-                openProductNotice?.(t.ai.title);
+                openProductNotice?.(t.ai.title, undefined, 'ai-agent');
               } : undefined}
             />
           </div>
@@ -180,7 +180,7 @@ export const Home: React.FC = () => {
               disabled={!chatActive}
               onClick={!chatActive ? (e) => {
                 e.preventDefault();
-                openProductNotice?.(t.chat.title);
+                openProductNotice?.(t.chat.title, undefined, 'chat');
               } : undefined}
             />
           </div>

@@ -376,7 +376,7 @@ export const Navbar: React.FC = () => {
       setMobileMenuOpen(false);
       setActiveDropdown(null);
       if (openProductNotice) {
-        openProductNotice(title);
+        openProductNotice(title, undefined, subItem.productId);
       } else {
         showToast(`${title} 升级维护中，暂未开放`);
       }
@@ -424,8 +424,20 @@ export const Navbar: React.FC = () => {
 
   const handleShowcaseVisit = () => {
     if (!currentShowcase) return;
+    if ((currentShowcase as any).productId && isProductEnabled && !isProductEnabled((currentShowcase as any).productId)) {
+      if (openProductNotice) {
+        openProductNotice(currentShowcase.title, undefined, (currentShowcase as any).productId);
+      } else {
+        showToast(`${currentShowcase.title} 升级维护中，暂未开放`);
+      }
+      return;
+    }
     if (currentShowcase.requiresPansouCheck && !pansouEnabled) {
-      showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
+      if (openProductNotice) {
+        openProductNotice(currentShowcase.title, undefined, 'pansou');
+      } else {
+        showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
+      }
       return;
     }
     if (currentShowcase.isExternal) {

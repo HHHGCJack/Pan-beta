@@ -438,7 +438,7 @@ export const ProductShowcase: React.FC = () => {
   const handleVisit = () => {
     if (!isEnabled) {
       if (openProductNotice) {
-        openProductNotice(product.title);
+        openProductNotice(product.title, undefined, categoryId);
       } else {
         showToast(`${product.title} 升级维护中，暂未开放`);
       }
@@ -1956,7 +1956,7 @@ export const ProductShowcase: React.FC = () => {
                       if (isProductEnabled && !isProductEnabled(item.id)) {
                         e.preventDefault();
                         if (openProductNotice) {
-                          openProductNotice(item.name);
+                          openProductNotice(item.name, undefined, item.id);
                         } else {
                           showToast(`${item.name} 升级维护中，敬请期待`);
                         }

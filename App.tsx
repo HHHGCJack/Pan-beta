@@ -385,19 +385,53 @@ function App() {
     setSupportModalOpen(true);
   };
 
-  const openProductNotice = (productName: string, customMessage?: string) => {
+  const openProductNotice = (productName: string, customMessage?: string, productId?: string) => {
     if (customMessage) {
       showToast(customMessage);
       return;
     }
 
     const clean = (productName || '').toLowerCase();
-    const isPansou = clean.includes('网盘') || clean.includes('pansou');
-    if (isPansou) {
-      showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
-    } else {
-      showToast(language === 'zh' ? `${productName} 暂未开放` : `${productName} is currently unavailable`);
+    const pid = (productId || '').toLowerCase();
+
+    // 1. 股票智能体 (AI Agent): 提示改为“模型升级中”
+    const isAiAgent = pid === 'ai-agent' || pid === 'ai' || clean.includes('股票') || clean.includes('投资') || clean.includes('agent') || clean.includes('quant') || clean.includes('ai 投资');
+    if (isAiAgent) {
+      const modelUpgradeTexts: Record<Language, string> = {
+        zh: '模型升级中',
+        en: 'Model upgrade in progress',
+        ja: 'モデル更新中',
+        ko: '모델 업그레이드 중',
+        es: 'Actualización del modelo en curso',
+        fr: 'Mise à niveau du modèle en cours',
+        de: 'Modell-Upgrade läuft',
+        el: 'Αναβάθμιση μοντέλου σε εξέλιξη',
+      };
+      showToast(modelUpgradeTexts[language] || '模型升级中');
+      return;
     }
+
+    // 2. 社交软件 (Chat) 与 智能搜 (Pansou): 提示均为“因政策原因暂停服务”
+    const isChat = pid === 'chat' || clean.includes('chat') || clean.includes('聊天') || clean.includes('社交') || clean.includes('telegram') || clean.includes('messenger');
+    const isPansou = pid === 'pansou' || clean.includes('网盘') || clean.includes('pansou') || clean.includes('搜');
+
+    if (isChat || isPansou) {
+      const policySuspendedTexts: Record<Language, string> = {
+        zh: '因政策原因暂停服务',
+        en: 'Service suspended due to policy',
+        ja: '制限によりサービス停止中',
+        ko: '정책으로 인해 서비스 중지',
+        es: 'Servicio suspendido por política',
+        fr: 'Service suspendu pour des raisons de politique',
+        de: 'Dienst richtlinienbedingt ausgesetzt',
+        el: 'Η υπηρεσία έχει ανασταλεί λόγω πολιτικής',
+      };
+      showToast(policySuspendedTexts[language] || '因政策原因暂停服务');
+      return;
+    }
+
+    // 3. 其他产品
+    showToast(language === 'zh' ? `${productName} 暂未开放` : `${productName} is currently unavailable`);
   };
 
   return (
