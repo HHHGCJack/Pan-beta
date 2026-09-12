@@ -39,4 +39,9 @@ export interface ThemeContextType {
   setPansouEnabled: (enabled: boolean) => void;
   openWelcomeModal?: (tab?: 'intro' | 'support') => void;
   openSupportModal?: () => void;
+  welcomeModalEnabled: boolean;
+  setWelcomeModalEnabled: (enabled: boolean) => void;
+  productsEnabled: Record<string, boolean>;
+  setProductEnabled: (key: string, enabled: boolean) => void;
+  isProductEnabled: (key: string) => boolean;
 }

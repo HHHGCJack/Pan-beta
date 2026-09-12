@@ -11,6 +11,14 @@ import { WelcomeModal } from './components/WelcomeModal';
 import { SupportModal } from './components/SupportModal';
 import { ThemeContextType, ThemeMode, Language } from './types';
 import { supabase } from './src/lib/supabase';
+import { 
+  getStoredSettings, 
+  saveServerSettings, 
+  fetchServerSettings, 
+  SETTINGS_EVENT, 
+  SiteSettings, 
+  ProductKey 
+} from './src/utils/settings';
 
 // Create Context
 export const ThemeContext = createContext<ThemeContextType>({
@@ -23,6 +31,16 @@ export const ThemeContext = createContext<ThemeContextType>({
   pansouEnabled: true,
   setPansouEnabled: () => {},
   openWelcomeModal: () => {},
+  welcomeModalEnabled: true,
+  setWelcomeModalEnabled: () => {},
+  productsEnabled: {
+    'pansou': true,
+    'reading-pro': true,
+    'ai-agent': true,
+    'chat': true,
+  },
+  setProductEnabled: () => {},
+  isProductEnabled: () => true,
 });
 
 // Use Context Hook
@@ -133,6 +151,7 @@ function App() {
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => detectSystemTheme());
   const [language, setLanguageState] = useState<Language>(() => detectBrowserLanguage());
   const [pansouEnabled, setPansouEnabled] = useState(true);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => getStoredSettings());
   const [welcomeInitialTab, setWelcomeInitialTab] = useState<'intro' | 'support'>('intro');
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
@@ -153,6 +172,59 @@ function App() {
       localStorage.setItem('gongpan_lang', lang);
     } catch {}
   };
+
+  const setWelcomeModalEnabled = (enabled: boolean) => {
+    setSiteSettings(prev => {
+      const next = { ...prev, welcomeModalEnabled: enabled };
+      saveServerSettings(next);
+      return next;
+    });
+  };
+
+  const setProductEnabled = (key: string, enabled: boolean) => {
+    setSiteSettings(prev => {
+      const next: SiteSettings = {
+        ...prev,
+        productsEnabled: {
+          ...prev.productsEnabled,
+          [key]: enabled
+        }
+      };
+      saveServerSettings(next);
+      if (key === 'pansou') {
+        setPansouEnabled(enabled);
+        try {
+          supabase.from('settings').upsert([{ id: 'pansou_enabled', value: enabled }]);
+        } catch {}
+      }
+      return next;
+    });
+  };
+
+  const isProductEnabled = (key: string): boolean => {
+    if (key === 'pansou' && !pansouEnabled) return false;
+    return siteSettings.productsEnabled[key as ProductKey] ?? true;
+  };
+
+  // Sync settings from server and listen to custom updates
+  useEffect(() => {
+    fetchServerSettings().then(latest => {
+      if (latest) {
+        setSiteSettings(latest);
+        if (typeof latest.productsEnabled?.pansou === 'boolean') {
+          setPansouEnabled(latest.productsEnabled.pansou);
+        }
+      }
+    });
+
+    const handleSettingsUpdate = (e: any) => {
+      if (e?.detail) {
+        setSiteSettings(e.detail);
+      }
+    };
+    window.addEventListener(SETTINGS_EVENT, handleSettingsUpdate);
+    return () => window.removeEventListener(SETTINGS_EVENT, handleSettingsUpdate);
+  }, []);
 
   // Listen to system theme preference changes in real-time
   useEffect(() => {
@@ -246,6 +318,11 @@ function App() {
   // Smooth opening of welcome modal on initial site visit
   useEffect(() => {
     try {
+      // Respect global admin switch for welcome modal
+      if (!siteSettings.welcomeModalEnabled) {
+        return;
+      }
+
       const todayKey = new Date().toISOString().slice(0, 10);
       const dismissedDate = localStorage.getItem('gongpan_welcome_dismiss_date');
       const hasSeenSession = sessionStorage.getItem('gongpan_welcome_seen_session');
@@ -260,7 +337,7 @@ function App() {
     } catch (e) {
       console.error(e);
     }
-  }, []);
+  }, [siteSettings.welcomeModalEnabled]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -311,7 +388,12 @@ function App() {
       pansouEnabled, 
       setPansouEnabled,
       openWelcomeModal,
-      openSupportModal 
+      openSupportModal,
+      welcomeModalEnabled: siteSettings.welcomeModalEnabled,
+      setWelcomeModalEnabled,
+      productsEnabled: siteSettings.productsEnabled,
+      setProductEnabled,
+      isProductEnabled
     }}>
       <div className={`min-h-screen flex flex-col font-sans selection:bg-blue-500/30 transition-colors duration-300 relative ${themeMode === 'dark' ? 'bg-[#09090b] text-white' : 'bg-[#f6f7fa] text-black'}`}>
         

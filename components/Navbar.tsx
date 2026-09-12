@@ -22,7 +22,7 @@ import { useCardTransition } from '../src/context/CardTransitionContext';
 import { scrollToElementSmoothly } from '../src/utils/smoothScroll';
 
 export const Navbar: React.FC = () => {
-  const { themeMode, setThemeMode, language, setLanguage, showToast, pansouEnabled, openWelcomeModal, openSupportModal } = useTheme();
+  const { themeMode, setThemeMode, language, setLanguage, showToast, pansouEnabled, openWelcomeModal, openSupportModal, isProductEnabled } = useTheme();
   const { startCollapse, status } = useCardTransition();
   const location = useLocation();
   const navigate = useNavigate();
@@ -195,12 +195,17 @@ export const Navbar: React.FC = () => {
 
   const t = (translations as any)[language] || translations.en;
 
-  const navData = [
+  const rawNavData = [
     { 
       name: t.nav.learn, 
       targetId: 'section-learn',
       items: [
-        { title: t.items.readingPro.title, desc: t.items.readingPro.desc, href: '/showcase/reading-pro' }
+        { 
+          productId: 'reading-pro',
+          title: t.items.readingPro.title, 
+          desc: t.items.readingPro.desc, 
+          href: '/showcase/reading-pro' 
+        }
       ] 
     },
     { 
@@ -208,22 +213,49 @@ export const Navbar: React.FC = () => {
       targetId: 'section-entertainment',
       items: [
         { 
+          productId: 'pansou',
           title: t.items.pansou.title, 
           desc: t.items.pansou.desc, 
           href: '/showcase/pansou'
         },
-        { title: t.items.chat.title, desc: t.items.chat.desc, href: '/showcase/chat' }
+        { 
+          productId: 'chat',
+          title: t.items.chat.title, 
+          desc: t.items.chat.desc, 
+          href: '/showcase/chat' 
+        }
       ] 
     },
     { 
       name: t.nav.tech, 
       targetId: 'section-tech',
       items: [
-        { title: t.items.ai.title, desc: t.items.ai.desc, href: '/showcase/ai-agent' },
-        { title: t.items.lab.title, desc: t.items.lab.desc, href: '/laboratory' }
+        { 
+          productId: 'ai-agent',
+          title: t.items.ai.title, 
+          desc: t.items.ai.desc, 
+          href: '/showcase/ai-agent' 
+        },
+        { 
+          productId: 'lab',
+          title: t.items.lab.title, 
+          desc: t.items.lab.desc, 
+          href: '/laboratory' 
+        }
       ] 
     }
   ];
+
+  // Dynamically filter items according to product switches
+  const navData = rawNavData
+    .map(category => ({
+      ...category,
+      items: category.items.filter(item => {
+        if (!item.productId || item.productId === 'lab') return true;
+        return isProductEnabled ? isProductEnabled(item.productId) : true;
+      })
+    }))
+    .filter(category => category.items.length > 0);
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

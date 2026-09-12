@@ -4,7 +4,15 @@ import { Card } from './Card';
 import { useTheme } from '../App';
 
 export const Home: React.FC = () => {
-  const { language } = useTheme();
+  const { language, isProductEnabled, themeMode } = useTheme();
+  const isDark = themeMode === 'dark';
+
+  const pansouVisible = isProductEnabled ? isProductEnabled('pansou') : true;
+  const readingProVisible = isProductEnabled ? isProductEnabled('reading-pro') : true;
+  const aiVisible = isProductEnabled ? isProductEnabled('ai-agent') : true;
+  const chatVisible = isProductEnabled ? isProductEnabled('chat') : true;
+
+  const hasAnyProduct = pansouVisible || readingProVisible || aiVisible || chatVisible;
 
   const translations = {
     zh: {
@@ -106,61 +114,77 @@ export const Home: React.FC = () => {
       <section id="content-section" className="max-w-7xl mx-auto px-6 pt-6 md:pt-10 pb-32 relative z-10 scroll-mt-16 md:scroll-mt-20">
         
         {/* Bento Grid Layout - Responsive: 1 col mobile, 2 col tablet, 3 col desktop */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-          
-          {/* 1. Pansou - Wide Card */}
-          <div id="section-entertainment" className="md:col-span-2 scroll-mt-24">
-            <Card
-              title={t.pansou.title}
-              description={t.pansou.desc}
-              imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1618005182384-a83a8bd57fbe&w=800&q=50&output=webp"
-              href="/showcase/pansou"
-              tag={t.pansou.tag}
-              size="wide"
-              theme="light"
-            />
-          </div>
+        {hasAnyProduct ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            
+            {/* 1. Pansou - Wide Card */}
+            {pansouVisible && (
+              <div id="section-entertainment" className="md:col-span-2 scroll-mt-24">
+                <Card
+                  title={t.pansou.title}
+                  description={t.pansou.desc}
+                  imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1618005182384-a83a8bd57fbe&w=800&q=50&output=webp"
+                  href="/showcase/pansou"
+                  tag={t.pansou.tag}
+                  size="wide"
+                  theme="light"
+                />
+              </div>
+            )}
 
-          {/* 2. Foreign Journal - Tall Card */}
-          <div id="section-learn" className="scroll-mt-24">
-            <Card
-              title={t.readingPro.title}
-              description={t.readingPro.desc}
-              imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1550592704-6c76defa9985&w=500&q=50&output=webp"
-              href="/showcase/reading-pro"
-              tag={t.readingPro.tag}
-              size="normal"
-              theme="light"
-            />
-          </div>
+            {/* 2. Foreign Journal - Tall Card */}
+            {readingProVisible && (
+              <div id="section-learn" className={`scroll-mt-24 ${!pansouVisible && !chatVisible ? 'md:col-span-1' : ''}`}>
+                <Card
+                  title={t.readingPro.title}
+                  description={t.readingPro.desc}
+                  imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1550592704-6c76defa9985&w=500&q=50&output=webp"
+                  href="/showcase/reading-pro"
+                  tag={t.readingPro.tag}
+                  size="normal"
+                  theme="light"
+                />
+              </div>
+            )}
 
-          {/* 3. AI Investment Agent */}
-          <div id="section-tech" className="scroll-mt-24">
-            <Card
-              title={t.ai.title}
-              description={t.ai.desc}
-              imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1611974789855-9c2a0a7236a3&w=800&q=60&output=webp"
-              href="/showcase/ai-agent"
-              tag={t.ai.tag}
-              size="normal"
-              theme="dark"
-            />
-          </div>
+            {/* 3. AI Investment Agent */}
+            {aiVisible && (
+              <div id="section-tech" className={`scroll-mt-24 ${!pansouVisible && !readingProVisible ? 'md:col-span-2' : ''}`}>
+                <Card
+                  title={t.ai.title}
+                  description={t.ai.desc}
+                  imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1611974789855-9c2a0a7236a3&w=800&q=60&output=webp"
+                  href="/showcase/ai-agent"
+                  tag={t.ai.tag}
+                  size="normal"
+                  theme="dark"
+                />
+              </div>
+            )}
 
-          {/* 4. Instant Chat - Light Card */}
-          <div id="section-chat" className="md:col-span-2 scroll-mt-24">
-            <Card
-              title={t.chat.title}
-              description={t.chat.desc}
-              imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1611746872915-64382b5c76da&w=800&q=50&output=webp"
-              href="/showcase/chat"
-              tag={t.chat.tag}
-              size="wide"
-              theme="light"
-            />
-          </div>
+            {/* 4. Instant Chat - Light Card */}
+            {chatVisible && (
+              <div id="section-chat" className="md:col-span-2 scroll-mt-24">
+                <Card
+                  title={t.chat.title}
+                  description={t.chat.desc}
+                  imageUrl="https://wsrv.nl/?url=images.unsplash.com/photo-1611746872915-64382b5c76da&w=800&q=50&output=webp"
+                  href="/showcase/chat"
+                  tag={t.chat.tag}
+                  size="wide"
+                  theme="light"
+                />
+              </div>
+            )}
 
-        </div>
+          </div>
+        ) : (
+          <div className={`p-12 text-center rounded-3xl border ${
+            isDark ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-white border-gray-200 text-gray-500'
+          }`}>
+            <p className="text-lg font-medium">所有产品模块正在升级调整中，敬请期待！</p>
+          </div>
+        )}
       </section>
     </main>
   );
