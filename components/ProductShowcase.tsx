@@ -356,7 +356,7 @@ const CHAT_TESTING_NOTICE: Record<string, { badge: string; text: string }> = {
 export const ProductShowcase: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { themeMode, language, showToast, pansouEnabled, isProductEnabled } = useTheme();
+  const { themeMode, language, showToast, pansouEnabled, isProductEnabled, openProductNotice } = useTheme();
   const isDark = themeMode === 'dark';
 
   const categoryId = normalizeCategoryId(id);
@@ -436,6 +436,15 @@ export const ProductShowcase: React.FC = () => {
 
   // Handle CTA Action
   const handleVisit = () => {
+    if (!isEnabled) {
+      if (openProductNotice) {
+        openProductNotice(product.title);
+      } else {
+        showToast(`${product.title} 升级维护中，暂未开放`);
+      }
+      return;
+    }
+
     if (product.requiresPansouCheck && !pansouEnabled) {
       showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
       return;
@@ -625,7 +634,7 @@ export const ProductShowcase: React.FC = () => {
       themeColor: '#06b6d4',
       icon: MessageSquare,
     },
-  ].filter(item => isProductEnabled ? isProductEnabled(item.id) : true);
+  ];
 
   if (!isEnabled) {
     return (
@@ -1943,6 +1952,16 @@ export const ProductShowcase: React.FC = () => {
                 >
                   <Link
                     to={`/showcase/${item.id}`}
+                    onClick={(e) => {
+                      if (isProductEnabled && !isProductEnabled(item.id)) {
+                        e.preventDefault();
+                        if (openProductNotice) {
+                          openProductNotice(item.name);
+                        } else {
+                          showToast(`${item.name} 升级维护中，敬请期待`);
+                        }
+                      }
+                    }}
                     className={`p-6 rounded-[2rem] border transition-all duration-300 block relative overflow-hidden group h-full ${
                       isCurrent
                         ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-500/10'

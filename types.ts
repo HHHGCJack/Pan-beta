@@ -23,6 +23,8 @@ export interface ProductCardProps {
   size?: 'normal' | 'wide';
   isExternal?: boolean;
   onToast?: () => void;
+  disabled?: boolean;
+  onClick?: (e: React.MouseEvent) => void;
 }
 
 export type ThemeMode = 'light' | 'dark';
@@ -39,6 +41,7 @@ export interface ThemeContextType {
   setPansouEnabled: (enabled: boolean) => void;
   openWelcomeModal?: (tab?: 'intro' | 'support') => void;
   openSupportModal?: () => void;
+  openProductNotice?: (title: string, message?: string) => void;
   welcomeModalEnabled: boolean;
   setWelcomeModalEnabled: (enabled: boolean) => void;
   productsEnabled: Record<string, boolean>;

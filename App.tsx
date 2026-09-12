@@ -31,6 +31,8 @@ export const ThemeContext = createContext<ThemeContextType>({
   pansouEnabled: true,
   setPansouEnabled: () => {},
   openWelcomeModal: () => {},
+  openSupportModal: () => {},
+  openProductNotice: () => {},
   welcomeModalEnabled: true,
   setWelcomeModalEnabled: () => {},
   productsEnabled: {
@@ -58,32 +60,34 @@ export const translations: Record<Language, { comingSoon: string, visitNow: stri
   el: { comingSoon: 'Σύντομα Κοντά Σας Coming Soon', visitNow: 'Επισκεφθείτε τώρα' },
 };
 
-// Simple Toast Component - Liquid Glass
+// Liquid Glass Capsule Floating Toast
 const Toast = ({ message, visible }: { message: string; visible: boolean }) => {
   const { themeMode } = useTheme();
   const isDark = themeMode === 'dark';
   
   return (
     <div 
-      className={`fixed top-24 left-1/2 transform -translate-x-1/2 z-[100] transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] ${
-        visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-8 scale-90 pointer-events-none'
+      className={`fixed top-20 sm:top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] pointer-events-none ${
+        visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-8 scale-90'
       }`}
     >
-      <div className={`px-6 py-3.5 rounded-full border flex items-center space-x-3 transition-all duration-500 relative overflow-hidden liquid-glass ${
+      <div className={`px-6 py-2.5 rounded-full border flex items-center space-x-2.5 relative overflow-hidden liquid-glass shadow-2xl ${
         isDark 
-          ? 'liquid-glass-dark text-white' 
-          : 'liquid-glass-light text-gray-900'
+          ? 'liquid-glass-dark text-white border-white/20 shadow-[0_12px_40px_rgba(0,0,0,0.8),inset_0_1px_1.5px_rgba(255,255,255,0.25)]' 
+          : 'liquid-glass-light text-gray-900 border-white/80 shadow-[0_12px_40px_rgba(0,0,0,0.12),inset_0_1.5px_2px_rgba(255,255,255,0.95)]'
       }`}>
-         {/* Glossy Reflection Overlay */}
-         <div className={`absolute inset-0 bg-gradient-to-b ${isDark ? 'from-white/15' : 'from-white/50'} to-transparent h-1/2 pointer-events-none rounded-t-full`} />
-         <div className="absolute top-0 left-1/4 right-1/4 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
+         {/* Glossy Specular Reflection Overlay */}
+         <div className={`absolute inset-0 bg-gradient-to-b ${isDark ? 'from-white/20' : 'from-white/60'} to-transparent h-1/2 pointer-events-none rounded-t-full`} />
+         <div className="absolute top-0 left-[15%] right-[15%] h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
          
-         <span className={`w-2.5 h-2.5 rounded-full animate-pulse relative z-10 ${
+         <span className={`w-2 h-2 rounded-full animate-pulse relative z-10 shrink-0 ${
            isDark 
-             ? 'bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]' 
-             : 'bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.6)]'
-         }`}></span>
-         <span className="text-sm font-semibold tracking-wide relative z-10">{message}</span>
+             ? 'bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.9)]' 
+             : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]'
+         }`} />
+         <span className="text-xs sm:text-sm font-semibold tracking-wide relative z-10 whitespace-nowrap">
+           {message}
+         </span>
       </div>
     </div>
   );
@@ -148,6 +152,7 @@ export const detectSystemTheme = (): ThemeMode => {
 function App() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('敬请期待 Coming Soon');
+  const toastTimeoutRef = React.useRef<any>(null);
   const [themeMode, setThemeModeState] = useState<ThemeMode>(() => detectSystemTheme());
   const [language, setLanguageState] = useState<Language>(() => detectBrowserLanguage());
   const [pansouEnabled, setPansouEnabled] = useState(true);
@@ -359,9 +364,12 @@ function App() {
   }, []);
 
   const showToast = (message: string) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
     setToastMessage(message);
     setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2000);
+    toastTimeoutRef.current = setTimeout(() => setToastVisible(false), 2400);
   };
 
   const handleCardToast = () => {
@@ -377,6 +385,21 @@ function App() {
     setSupportModalOpen(true);
   };
 
+  const openProductNotice = (productName: string, customMessage?: string) => {
+    if (customMessage) {
+      showToast(customMessage);
+      return;
+    }
+
+    const clean = (productName || '').toLowerCase();
+    const isPansou = clean.includes('网盘') || clean.includes('pansou');
+    if (isPansou) {
+      showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
+    } else {
+      showToast(language === 'zh' ? `${productName} 暂未开放` : `${productName} is currently unavailable`);
+    }
+  };
+
   return (
     <ThemeContext.Provider value={{ 
       themeMode, 
@@ -389,6 +412,7 @@ function App() {
       setPansouEnabled,
       openWelcomeModal,
       openSupportModal,
+      openProductNotice,
       welcomeModalEnabled: siteSettings.welcomeModalEnabled,
       setWelcomeModalEnabled,
       productsEnabled: siteSettings.productsEnabled,

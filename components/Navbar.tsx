@@ -22,7 +22,18 @@ import { useCardTransition } from '../src/context/CardTransitionContext';
 import { scrollToElementSmoothly } from '../src/utils/smoothScroll';
 
 export const Navbar: React.FC = () => {
-  const { themeMode, setThemeMode, language, setLanguage, showToast, pansouEnabled, openWelcomeModal, openSupportModal, isProductEnabled } = useTheme();
+  const { 
+    themeMode, 
+    setThemeMode, 
+    language, 
+    setLanguage, 
+    showToast, 
+    pansouEnabled, 
+    openWelcomeModal, 
+    openSupportModal, 
+    isProductEnabled,
+    openProductNotice
+  } = useTheme();
   const { startCollapse, status } = useCardTransition();
   const location = useLocation();
   const navigate = useNavigate();
@@ -246,16 +257,8 @@ export const Navbar: React.FC = () => {
     }
   ];
 
-  // Dynamically filter items according to product switches
-  const navData = rawNavData
-    .map(category => ({
-      ...category,
-      items: category.items.filter(item => {
-        if (!item.productId || item.productId === 'lab') return true;
-        return isProductEnabled ? isProductEnabled(item.productId) : true;
-      })
-    }))
-    .filter(category => category.items.length > 0);
+  // Keep all navigation items visible; disabled ones trigger popup notices on click
+  const navData = rawNavData;
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -367,6 +370,19 @@ export const Navbar: React.FC = () => {
   };
 
   const handleItemClick = (e: React.MouseEvent, title: string, href: string, subItem?: any) => {
+    // Intercept disabled products with popup notice modal instead of navigating
+    if (subItem?.productId && subItem.productId !== 'lab' && isProductEnabled && !isProductEnabled(subItem.productId)) {
+      e.preventDefault();
+      setMobileMenuOpen(false);
+      setActiveDropdown(null);
+      if (openProductNotice) {
+        openProductNotice(title);
+      } else {
+        showToast(`${title} 升级维护中，暂未开放`);
+      }
+      return;
+    }
+
     if (href === '#') {
       e.preventDefault();
       if (subItem && subItem.onToast) {
