@@ -51,7 +51,7 @@ export const Hero: React.FC = () => {
     >
       {/* Main Center Brand Cover - Pure Dead-Center Alignment */}
       <div className="flex flex-col items-center justify-center w-full max-w-5xl mx-auto text-center">
-        <div className="relative h-32 sm:h-44 md:h-56 lg:h-64 w-full flex items-center justify-center overflow-visible">
+        <div className="relative h-28 sm:h-38 md:h-48 lg:h-56 w-full flex items-center justify-center overflow-visible">
           {words.map((word, index) => {
             const isActive = index === activeIndex;
             return (
@@ -61,15 +61,15 @@ export const Hero: React.FC = () => {
                   isActive
                     ? 'opacity-100 transform translate-y-0 scale-100 pointer-events-auto'
                     : 'opacity-0 transform translate-y-4 scale-95 pointer-events-none'
-                } ${themeMode === 'dark' ? 'text-white drop-shadow-[0_2px_24px_rgba(255,255,255,0.28)]' : 'text-gray-900 drop-shadow-sm'}`}
+                } ${themeMode === 'dark' ? 'text-white drop-shadow-[0_2px_22px_rgba(255,255,255,0.26)]' : 'text-gray-900 drop-shadow-sm'}`}
                 style={{
                   fontFamily: '"SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Varela Round", sans-serif',
                   fontWeight: 900,
                   fontSize: ['cn', 'jp', 'kr'].includes(word.lang) 
-                    ? 'clamp(3.8rem, 16vw, 9.6rem)' 
-                    : 'clamp(4.2rem, 18vw, 11rem)',
-                  lineHeight: 1.15,
-                  letterSpacing: '-0.03em',
+                    ? 'clamp(3.1rem, 13.5vw, 8.2rem)' 
+                    : 'clamp(3.4rem, 15vw, 9.2rem)',
+                  lineHeight: 1.18,
+                  letterSpacing: '-0.025em',
                   willChange: isActive ? 'transform, opacity' : 'auto'
                 }}
               >
@@ -80,7 +80,7 @@ export const Hero: React.FC = () => {
         </div>
 
         <p 
-          className={`mt-3 sm:mt-5 md:mt-6 text-xs sm:text-sm md:text-base font-semibold tracking-[0.35em] sm:tracking-[0.45em] uppercase ${
+          className={`mt-2 sm:mt-4 md:mt-5 text-[11px] sm:text-xs md:text-sm font-semibold tracking-[0.3em] sm:tracking-[0.4em] uppercase ${
             themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
           }`}
         >
