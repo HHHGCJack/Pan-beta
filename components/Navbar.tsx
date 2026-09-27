@@ -20,7 +20,6 @@ import { Logo } from './Logo';
 import { showcaseData } from '../src/data/showcases';
 import { useCardTransition } from '../src/context/CardTransitionContext';
 import { scrollToElementSmoothly } from '../src/utils/smoothScroll';
-import { preloadRoute, preloadSupportModal } from '../src/utils/preload';
 
 export const Navbar: React.FC = () => {
   const { 
@@ -276,14 +275,6 @@ export const Navbar: React.FC = () => {
       navTimeoutRef.current = null;
     }
     setActiveDropdown(idx);
-    const category = navData[idx];
-    if (category?.items) {
-      category.items.forEach((sub) => {
-        if (sub.href && sub.href !== '#') {
-          preloadRoute(sub.href);
-        }
-      });
-    }
   };
 
   const handleNavLeave = () => {
@@ -662,9 +653,6 @@ export const Navbar: React.FC = () => {
             {!isShowcasePage && (
               <button 
                 onClick={handleSupportClick}
-                onMouseEnter={() => preloadSupportModal()}
-                onPointerDown={() => preloadSupportModal()}
-                onTouchStart={() => preloadSupportModal()}
                 className={`hidden sm:inline-block ml-1 px-4 py-1.5 text-xs sm:text-sm font-semibold transition-all duration-200 rounded-full active:scale-95 ${
                   themeMode === 'dark'
                     ? 'liquid-glass-pill-dark text-white hover:bg-white/20'
@@ -679,16 +667,8 @@ export const Navbar: React.FC = () => {
             <button 
               className={`lg:hidden p-2 rounded-full active:bg-black/5 ${themeMode === 'dark' ? 'text-white' : 'text-gray-800'}`}
               onClick={() => {
-                const nextState = !mobileMenuOpen;
-                setMobileMenuOpen(nextState);
+                setMobileMenuOpen(!mobileMenuOpen);
                 setLangDropdownOpen(false);
-                if (nextState) {
-                  navData.forEach((cat) =>
-                    cat.items.forEach((item) => {
-                      if (item.href && item.href !== '#') preloadRoute(item.href);
-                    })
-                  );
-                }
               }}
             >
               {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -728,15 +708,6 @@ export const Navbar: React.FC = () => {
                         key={subItem.title} 
                         href={subItem.href}
                         onClick={(e) => handleItemClick(e, subItem.title, subItem.href, subItem)}
-                        onMouseEnter={() => {
-                          if (subItem.href && subItem.href !== '#') preloadRoute(subItem.href);
-                        }}
-                        onPointerDown={() => {
-                          if (subItem.href && subItem.href !== '#') preloadRoute(subItem.href);
-                        }}
-                        onTouchStart={() => {
-                          if (subItem.href && subItem.href !== '#') preloadRoute(subItem.href);
-                        }}
                         className={`group block p-4 rounded-2xl transition-colors duration-150 ${
                           themeMode === 'dark'
                             ? 'hover:bg-white/10 hover:shadow-[inset_0_0_10px_rgba(255,255,255,0.05)]'
@@ -849,15 +820,6 @@ export const Navbar: React.FC = () => {
                                 key={sub.title} 
                                 href={sub.href}
                                 onClick={(e) => handleItemClick(e, sub.title, sub.href, sub)}
-                                onTouchStart={() => {
-                                  if (sub.href && sub.href !== '#') preloadRoute(sub.href);
-                                }}
-                                onPointerDown={() => {
-                                  if (sub.href && sub.href !== '#') preloadRoute(sub.href);
-                                }}
-                                onMouseEnter={() => {
-                                  if (sub.href && sub.href !== '#') preloadRoute(sub.href);
-                                }}
                                 className={`group relative block p-3.5 rounded-2xl transition-all duration-200 border overflow-hidden ${
                                   themeMode === 'dark'
                                     ? 'bg-white/[0.04] border-white/10 hover:border-white/20 active:bg-white/[0.08] active:scale-[0.985] shadow-[0_4px_16px_rgba(0,0,0,0.25),inset_0_1px_1px_rgba(255,255,255,0.08)]'

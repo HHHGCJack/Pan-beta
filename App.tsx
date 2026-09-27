@@ -1,8 +1,14 @@
-import React, { useState, createContext, useContext, useEffect, Suspense, lazy } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './components/Home';
+import { ReadingPro } from './components/ReadingPro';
+import { Admin } from './components/Admin';
+import { Laboratory } from './components/Laboratory';
+import { ProductShowcase } from './components/ProductShowcase';
+import { WelcomeModal } from './components/WelcomeModal';
+import { SupportModal } from './components/SupportModal';
 import { ThemeContextType, ThemeMode, Language } from './types';
 import { supabase } from './src/lib/supabase';
 import { 
@@ -13,15 +19,6 @@ import {
   SiteSettings, 
   ProductKey 
 } from './src/utils/settings';
-import {
-  ProductShowcase,
-  ReadingPro,
-  Laboratory,
-  Admin,
-  WelcomeModal,
-  SupportModal,
-  startIdlePreload
-} from './src/utils/preload';
 
 // Create Context
 export const ThemeContext = createContext<ThemeContextType>({
@@ -249,12 +246,8 @@ function App() {
     window.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', syncLatest);
 
-    // 3. Periodic light background poll (every 30 seconds, only when active tab is visible) to ensure cross-device consistency
-    const pollTimer = setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        syncLatest();
-      }
-    }, 30000);
+    // 3. Periodic light background poll (every 25 seconds) to ensure cross-device consistency
+    const pollTimer = setInterval(syncLatest, 25000);
 
     // 4. In-page event listener
     const handleSettingsUpdate = (e: any) => {
@@ -275,11 +268,6 @@ function App() {
       window.removeEventListener(SETTINGS_EVENT, handleSettingsUpdate);
       clearInterval(pollTimer);
     };
-  }, []);
-
-  // Background idle preloading of all secondary routes and showcase assets
-  useEffect(() => {
-    startIdlePreload();
   }, []);
 
   // Listen to system theme preference changes in real-time
@@ -563,34 +551,24 @@ function App() {
           <Navbar />
           <Toast message={toastMessage} visible={toastVisible} />
           
-          {welcomeModalOpen && (
-            <Suspense fallback={null}>
-              <WelcomeModal 
-                isOpen={welcomeModalOpen} 
-                initialTab={welcomeInitialTab}
-                onClose={() => setWelcomeModalOpen(false)} 
-              />
-            </Suspense>
-          )}
-          {supportModalOpen && (
-            <Suspense fallback={null}>
-              <SupportModal 
-                isOpen={supportModalOpen} 
-                onClose={() => setSupportModalOpen(false)} 
-              />
-            </Suspense>
-          )}
+          <WelcomeModal 
+            isOpen={welcomeModalOpen} 
+            initialTab={welcomeInitialTab}
+            onClose={() => setWelcomeModalOpen(false)} 
+          />
+          <SupportModal 
+            isOpen={supportModalOpen} 
+            onClose={() => setSupportModalOpen(false)} 
+          />
           
           <div className="flex-grow flex flex-col">
-            <Suspense fallback={<div className="flex-grow min-h-[50vh]" />}>
-              <Routes location={location}>
-                <Route path="/" element={<Home />} />
-                <Route path="/showcase/:id" element={<ProductShowcase />} />
-                <Route path="/reading-pro" element={<ReadingPro />} />
-                <Route path="/laboratory" element={<Laboratory />} />
-                <Route path="/admin" element={<Admin />} />
-              </Routes>
-            </Suspense>
+            <Routes location={location}>
+              <Route path="/" element={<Home />} />
+              <Route path="/showcase/:id" element={<ProductShowcase />} />
+              <Route path="/reading-pro" element={<ReadingPro />} />
+              <Route path="/laboratory" element={<Laboratory />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
           </div>
 
           <Footer />
