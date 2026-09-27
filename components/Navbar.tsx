@@ -561,14 +561,8 @@ export const Navbar: React.FC = () => {
             )}
           </div>
 
-          {/* CENTER: Showcase CTA or Main Navigation */}
-          {isShowcasePage && currentShowcase ? (
-            <div className="hidden md:flex items-center space-x-3">
-              <span className="text-xs font-mono text-gray-400">
-                {currentShowcase.tag}
-              </span>
-            </div>
-          ) : (
+          {/* CENTER: Main Navigation on Home / Clean in Showcase */}
+          {isShowcasePage && currentShowcase ? null : (
             <div className="hidden lg:flex items-center space-x-2 h-full">
               {navData.map((item, idx) => (
                 <div 
