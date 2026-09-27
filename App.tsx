@@ -22,6 +22,7 @@ import {
 } from './src/utils/preload';
 import { WelcomeModal } from './components/WelcomeModal';
 import { SupportModal } from './components/SupportModal';
+import { SUPPORT_QR_BASE64 } from './src/assets/support_qr_base64';
 
 // Create Context
 export const ThemeContext = createContext<ThemeContextType>({
@@ -166,18 +167,16 @@ function App() {
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const location = useLocation();
 
-  // Priority pre-warming of critical images (payment QR code and hero cards)
+  // Priority pre-warming and GPU decoding of payment QR code in memory
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      const qrB64 = new Image();
+      qrB64.src = SUPPORT_QR_BASE64;
+      qrB64.decode?.().catch(() => {});
+
       const qrWebp = new Image();
-      qrWebp.fetchPriority = 'high';
       qrWebp.src = '/support-qr.webp';
       qrWebp.decode?.().catch(() => {});
-
-      const qrJpg = new Image();
-      qrJpg.fetchPriority = 'high';
-      qrJpg.src = '/support-qr.jpg';
-      qrJpg.decode?.().catch(() => {});
     }
   }, []);
 

@@ -92,40 +92,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   }, [externalIsOpen, initialTab]);
 
   useEffect(() => {
-    let active = true;
-
-    const saved = localStorage.getItem('custom_support_qr');
-    if (saved && active) {
-      setQrImage(saved);
-      return;
-    }
-
-    // Check custom server QR in background with standard caching
-    fetch('/api/support-qr', { cache: 'default' })
-      .then(res => {
-        if (res.ok) return res.blob();
-        throw new Error('No custom server qr');
-      })
-      .then(blob => {
-        if (!active || blob.size < 200) return;
-        const url = URL.createObjectURL(blob);
-        setQrImage(url);
-      })
-      .catch(() => {
-        try {
-          const { data } = supabase.storage.from('books-media').getPublicUrl('custom-assets/support-qr.jpg');
-          if (data?.publicUrl && active) {
-            const img = new Image();
-            img.onload = () => {
-              if (active) setQrImage(data.publicUrl);
-            };
-            img.src = data.publicUrl;
-          }
-        } catch {}
-      });
-
-    return () => { active = false; };
-  }, []);
+    try {
+      const saved = localStorage.getItem('custom_support_qr');
+      if (saved && !saved.includes('nloln.de') && !saved.includes('img2.') && saved.length < 500000) {
+        setQrImage(saved);
+      }
+    } catch {}
+  }, [isOpen]);
 
   const handleDownload = async () => {
     try {
