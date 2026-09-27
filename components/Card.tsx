@@ -107,6 +107,8 @@ export const Card: React.FC<ProductCardProps> = ({
               const target = e.currentTarget;
               if (target.src.includes('wsrv.nl/?url=')) {
                 target.src = target.src.replace(/^.*wsrv\.nl\/\?url=/, 'https://');
+              } else if (!target.src.includes('images.unsplash.com')) {
+                target.src = 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=60';
               }
             }}
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 group-active:scale-105"

@@ -166,6 +166,21 @@ function App() {
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const location = useLocation();
 
+  // Priority pre-warming of critical images (payment QR code and hero cards)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const qrWebp = new Image();
+      qrWebp.fetchPriority = 'high';
+      qrWebp.src = '/support-qr.webp';
+      qrWebp.decode?.().catch(() => {});
+
+      const qrJpg = new Image();
+      qrJpg.fetchPriority = 'high';
+      qrJpg.src = '/support-qr.jpg';
+      qrJpg.decode?.().catch(() => {});
+    }
+  }, []);
+
   const setThemeMode = (mode: ThemeMode) => {
     setThemeModeState(mode);
     try {

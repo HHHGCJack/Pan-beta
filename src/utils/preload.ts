@@ -96,11 +96,14 @@ export function preloadImage(url: string | undefined): void {
   }
 }
 
-// Key showcase hero images to warm up browser disk/memory cache
+// Key showcase hero images and critical payment assets to warm up browser disk/memory cache
 export const SHOWCASE_HERO_IMAGES = [
-  'https://wsrv.nl/?url=images.unsplash.com/photo-1618005182384-a83a8bd57fbe&w=800&q=50&output=webp',
-  'https://wsrv.nl/?url=images.unsplash.com/photo-1550592704-6c76defa9985&w=500&q=50&output=webp',
-  'https://wsrv.nl/?url=images.unsplash.com/photo-1611974789855-9c2a0a7236a3&w=800&q=60&output=webp',
+  '/support-qr.webp',
+  '/support-qr.jpg',
+  'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1550592704-6c76defa9985?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=60',
+  'https://images.unsplash.com/photo-1611746872915-64382b5c76da?auto=format&fit=crop&w=800&q=60',
   'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=960&q=75&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=960&q=75&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1642543492481-44e81e3914a7?w=960&q=75&auto=format&fit=crop',
