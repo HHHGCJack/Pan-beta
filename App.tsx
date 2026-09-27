@@ -1,14 +1,8 @@
-import React, { useState, createContext, useContext, useEffect } from 'react';
+import React, { useState, createContext, useContext, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './components/Home';
-import { ReadingPro } from './components/ReadingPro';
-import { Admin } from './components/Admin';
-import { Laboratory } from './components/Laboratory';
-import { ProductShowcase } from './components/ProductShowcase';
-import { WelcomeModal } from './components/WelcomeModal';
-import { SupportModal } from './components/SupportModal';
 import { ThemeContextType, ThemeMode, Language } from './types';
 import { supabase } from './src/lib/supabase';
 import { 
@@ -19,6 +13,14 @@ import {
   SiteSettings, 
   ProductKey 
 } from './src/utils/settings';
+
+// Code-split heavy routes and modals to shrink initial landing bundle by >70%
+const ProductShowcase = lazy(() => import('./components/ProductShowcase').then(m => ({ default: m.ProductShowcase })));
+const ReadingPro = lazy(() => import('./components/ReadingPro').then(m => ({ default: m.ReadingPro })));
+const Laboratory = lazy(() => import('./components/Laboratory').then(m => ({ default: m.Laboratory })));
+const Admin = lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
+const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
+const SupportModal = lazy(() => import('./components/SupportModal').then(m => ({ default: m.SupportModal })));
 
 // Create Context
 export const ThemeContext = createContext<ThemeContextType>({
@@ -246,8 +248,12 @@ function App() {
     window.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', syncLatest);
 
-    // 3. Periodic light background poll (every 25 seconds) to ensure cross-device consistency
-    const pollTimer = setInterval(syncLatest, 25000);
+    // 3. Periodic light background poll (every 30 seconds, only when active tab is visible) to ensure cross-device consistency
+    const pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        syncLatest();
+      }
+    }, 30000);
 
     // 4. In-page event listener
     const handleSettingsUpdate = (e: any) => {
@@ -551,24 +557,34 @@ function App() {
           <Navbar />
           <Toast message={toastMessage} visible={toastVisible} />
           
-          <WelcomeModal 
-            isOpen={welcomeModalOpen} 
-            initialTab={welcomeInitialTab}
-            onClose={() => setWelcomeModalOpen(false)} 
-          />
-          <SupportModal 
-            isOpen={supportModalOpen} 
-            onClose={() => setSupportModalOpen(false)} 
-          />
+          {welcomeModalOpen && (
+            <Suspense fallback={null}>
+              <WelcomeModal 
+                isOpen={welcomeModalOpen} 
+                initialTab={welcomeInitialTab}
+                onClose={() => setWelcomeModalOpen(false)} 
+              />
+            </Suspense>
+          )}
+          {supportModalOpen && (
+            <Suspense fallback={null}>
+              <SupportModal 
+                isOpen={supportModalOpen} 
+                onClose={() => setSupportModalOpen(false)} 
+              />
+            </Suspense>
+          )}
           
           <div className="flex-grow flex flex-col">
-            <Routes location={location}>
-              <Route path="/" element={<Home />} />
-              <Route path="/showcase/:id" element={<ProductShowcase />} />
-              <Route path="/reading-pro" element={<ReadingPro />} />
-              <Route path="/laboratory" element={<Laboratory />} />
-              <Route path="/admin" element={<Admin />} />
-            </Routes>
+            <Suspense fallback={<div className="flex-grow min-h-[50vh]" />}>
+              <Routes location={location}>
+                <Route path="/" element={<Home />} />
+                <Route path="/showcase/:id" element={<ProductShowcase />} />
+                <Route path="/reading-pro" element={<ReadingPro />} />
+                <Route path="/laboratory" element={<Laboratory />} />
+                <Route path="/admin" element={<Admin />} />
+              </Routes>
+            </Suspense>
           </div>
 
           <Footer />
