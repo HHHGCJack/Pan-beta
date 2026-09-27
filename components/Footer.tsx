@@ -235,13 +235,13 @@ export const Footer: React.FC = () => {
       <AnimatePresence>
         {activeModal && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 sm:p-6 md:p-8 pointer-events-auto overscroll-none">
-            {/* Click-away overlay without full screen blur or darkening */}
+            {/* Click-away overlay with soft blur and darkening */}
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="absolute inset-0 bg-transparent" 
+              className="absolute inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-sm cursor-pointer" 
               onClick={closeModal} 
             />
             

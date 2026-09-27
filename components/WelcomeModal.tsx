@@ -679,13 +679,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 overflow-y-auto pointer-events-auto overscroll-none"
           id="welcome-modal-container"
         >
-          {/* Transparent Backdrop (Does not darken background - pure liquid glass presentation) */}
+          {/* Soft Liquid Glass Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-transparent cursor-pointer"
+            className="absolute inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
             onClick={handleClose}
           />
 
