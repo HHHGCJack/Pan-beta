@@ -157,6 +157,7 @@ function App() {
   const [language, setLanguageState] = useState<Language>(() => detectBrowserLanguage());
   const [pansouEnabled, setPansouEnabled] = useState(true);
   const [siteSettings, setSiteSettings] = useState<SiteSettings>(() => getStoredSettings());
+  const [isInitialSettingsSynced, setIsInitialSettingsSynced] = useState(false);
   const [welcomeInitialTab, setWelcomeInitialTab] = useState<'intro' | 'support'>('intro');
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
@@ -208,19 +209,33 @@ function App() {
 
   // Sync settings from server and listen to custom updates across devices
   useEffect(() => {
-    const syncLatest = () => {
-      fetchServerSettings().then(latest => {
-        if (latest) {
+    let isMounted = true;
+
+    const syncLatest = async () => {
+      try {
+        const latest = await fetchServerSettings();
+        if (latest && isMounted) {
           setSiteSettings(latest);
           if (typeof latest.productsEnabled?.pansou === 'boolean') {
             setPansouEnabled(latest.productsEnabled.pansou);
           }
         }
-      });
+      } catch (e) {
+        console.warn('Failed to sync settings:', e);
+      } finally {
+        if (isMounted) {
+          setIsInitialSettingsSynced(true);
+        }
+      }
     };
 
     // 1. Initial immediate sync on mount
     syncLatest();
+
+    // Safety fallback: ensure initial sync flag turns on within 1.5s even if network is extremely slow
+    const safetyTimer = setTimeout(() => {
+      if (isMounted) setIsInitialSettingsSynced(true);
+    }, 1500);
 
     // 2. Refresh when switching tabs/windows or waking device from sleep
     const handleVisibility = () => {
@@ -236,7 +251,7 @@ function App() {
 
     // 4. In-page event listener
     const handleSettingsUpdate = (e: any) => {
-      if (e?.detail) {
+      if (e?.detail && isMounted) {
         setSiteSettings(e.detail);
         if (typeof e.detail.productsEnabled?.pansou === 'boolean') {
           setPansouEnabled(e.detail.productsEnabled.pansou);
@@ -246,6 +261,8 @@ function App() {
     window.addEventListener(SETTINGS_EVENT, handleSettingsUpdate);
 
     return () => {
+      isMounted = false;
+      clearTimeout(safetyTimer);
       window.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('focus', syncLatest);
       window.removeEventListener(SETTINGS_EVENT, handleSettingsUpdate);
@@ -342,29 +359,47 @@ function App() {
     });
   }, [themeMode]);
 
-  // Smooth opening of welcome modal on initial site visit
+  // Smooth opening of welcome modal on initial site visit (only after settings are verified from cloud!)
   useEffect(() => {
-    try {
-      // Respect global admin switch for welcome modal
-      if (!siteSettings.welcomeModalEnabled) {
-        return;
-      }
+    // CRITICAL: NEVER auto-open before the initial server settings sync finishes!
+    if (!isInitialSettingsSynced) {
+      return;
+    }
 
+    // Respect global admin switch for welcome modal: if disabled, do not open and close if currently open
+    if (!siteSettings.welcomeModalEnabled) {
+      if (welcomeModalOpen) {
+        setWelcomeModalOpen(false);
+      }
+      return;
+    }
+
+    try {
       const todayKey = new Date().toISOString().slice(0, 10);
       const dismissedDate = localStorage.getItem('gongpan_welcome_dismiss_date');
       const hasSeenSession = sessionStorage.getItem('gongpan_welcome_seen_session');
 
       if (dismissedDate !== todayKey && !hasSeenSession) {
         const timer = setTimeout(() => {
-          setWelcomeModalOpen(true);
-          sessionStorage.setItem('gongpan_welcome_seen_session', 'true');
+          // Double check before opening
+          if (siteSettings.welcomeModalEnabled) {
+            setWelcomeModalOpen(true);
+            sessionStorage.setItem('gongpan_welcome_seen_session', 'true');
+          }
         }, 400);
         return () => clearTimeout(timer);
       }
     } catch (e) {
       console.error(e);
     }
-  }, [siteSettings.welcomeModalEnabled]);
+  }, [isInitialSettingsSynced, siteSettings.welcomeModalEnabled]);
+
+  // Keep modal state tightly synced with global admin switch: close immediately if disabled
+  useEffect(() => {
+    if (!siteSettings.welcomeModalEnabled && welcomeModalOpen) {
+      setWelcomeModalOpen(false);
+    }
+  }, [siteSettings.welcomeModalEnabled, welcomeModalOpen]);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -478,10 +513,10 @@ function App() {
       <div className={`min-h-screen flex flex-col font-sans selection:bg-blue-500/30 transition-colors duration-300 relative ${themeMode === 'dark' ? 'bg-[#09090b] text-white' : 'bg-[#f6f7fa] text-black'}`}>
         
         {/* Dynamic Liquid Glass Ambient Light Caustics - GPU Optimized & Low Overhead */}
-        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden [contain:strict]">
+        <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden transform-gpu">
           {/* Top Primary Liquid Orb */}
           <div 
-            className={`absolute -top-32 -left-16 w-[360px] sm:w-[480px] h-[360px] sm:h-[480px] rounded-full blur-[40px] sm:blur-[60px] opacity-50 transition-colors duration-500 ${
+            className={`absolute -top-32 -left-16 w-[360px] sm:w-[480px] h-[360px] sm:h-[480px] rounded-full blur-[40px] sm:blur-[60px] opacity-50 transition-colors duration-500 transform-gpu ${
               themeMode === 'dark' 
                 ? 'bg-gradient-to-br from-blue-600/20 via-indigo-600/15 to-cyan-500/15' 
                 : 'bg-gradient-to-br from-blue-400/25 via-indigo-300/20 to-sky-200/25'
@@ -490,7 +525,7 @@ function App() {
 
           {/* Top Right Amber/Golden Liquid Glow */}
           <div 
-            className={`absolute top-16 -right-32 w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full blur-[40px] sm:blur-[60px] opacity-40 transition-colors duration-500 ${
+            className={`absolute top-16 -right-32 w-[380px] sm:w-[480px] h-[380px] sm:h-[480px] rounded-full blur-[40px] sm:blur-[60px] opacity-40 transition-colors duration-500 transform-gpu ${
               themeMode === 'dark' 
                 ? 'bg-gradient-to-bl from-amber-500/10 via-orange-600/10 to-transparent' 
                 : 'bg-gradient-to-bl from-amber-300/20 via-rose-200/15 to-orange-100/20'
@@ -499,7 +534,7 @@ function App() {
 
           {/* Bottom Violet / Indigo Liquid Reservoir */}
           <div 
-            className={`absolute -bottom-32 right-[8%] w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] rounded-full blur-[45px] sm:blur-[65px] opacity-40 transition-colors duration-500 ${
+            className={`absolute -bottom-32 right-[8%] w-[400px] sm:w-[500px] h-[400px] sm:h-[500px] rounded-full blur-[45px] sm:blur-[65px] opacity-40 transition-colors duration-500 transform-gpu ${
               themeMode === 'dark' 
                 ? 'bg-gradient-to-t from-purple-700/15 via-blue-600/10 to-transparent' 
                 : 'bg-gradient-to-t from-purple-300/20 via-blue-200/20 to-pink-100/15'

@@ -1925,7 +1925,7 @@ export const ProductShowcase: React.FC = () => {
             >
               <div className="absolute inset-x-0 top-0 h-1/2 pointer-events-none bg-gradient-to-b from-white/30 dark:from-white/15 to-transparent" />
               <ArrowLeft size={14} className="transition-transform duration-200 group-hover:-translate-x-0.5 relative z-10" />
-              <span className="relative z-10">{pageUiT.backToHub}</span>
+              <span className="relative z-10">{(pageUiT as any)?.backToHub || '返回产品矩阵'}</span>
             </button>
           </motion.div>
 

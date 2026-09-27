@@ -61,7 +61,7 @@ async function startServer() {
     res.setHeader("Surrogate-Control", "no-store");
 
     let finalSettings = {
-      welcomeModalEnabled: true,
+      welcomeModalEnabled: false,
       productsEnabled: {
         'pansou': true,
         'reading-pro': true,

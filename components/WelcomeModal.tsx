@@ -37,7 +37,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   onClose: externalOnClose,
   initialTab = 'intro'
 }) => {
-  const { themeMode, language, showToast } = useTheme();
+  const { themeMode, language, showToast, welcomeModalEnabled } = useTheme();
   const isDark = themeMode === 'dark';
 
   const [internalOpen, setInternalOpen] = useState(false);
@@ -54,6 +54,12 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   });
 
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalOpen;
+
+  useEffect(() => {
+    if (!welcomeModalEnabled && internalOpen) {
+      setInternalOpen(false);
+    }
+  }, [welcomeModalEnabled, internalOpen]);
 
   useEffect(() => {
     if (externalIsOpen && initialTab) {
@@ -93,9 +99,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     }
   }, [isOpen]);
 
-  // Auto show on website open if not dismissed today
+  // Auto show on website open if not dismissed today and enabled by global switch
   useEffect(() => {
     if (externalIsOpen !== undefined) return;
+    if (!welcomeModalEnabled) return;
     
     const todayKey = new Date().toISOString().slice(0, 10);
     const dismissedDate = localStorage.getItem('gongpan_welcome_dismiss_date');
@@ -104,12 +111,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     // If not dismissed for today and not seen this session, show after a slight delay for smooth entry
     if (dismissedDate !== todayKey && !hasSeenSession) {
       const timer = setTimeout(() => {
-        setInternalOpen(true);
-        sessionStorage.setItem('gongpan_welcome_seen_session', 'true');
+        if (welcomeModalEnabled) {
+          setInternalOpen(true);
+          sessionStorage.setItem('gongpan_welcome_seen_session', 'true');
+        }
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [externalIsOpen]);
+  }, [externalIsOpen, welcomeModalEnabled]);
 
   const handleClose = () => {
     if (dontShowToday) {

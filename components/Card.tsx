@@ -92,6 +92,12 @@ export const Card: React.FC<ProductCardProps> = ({
             decoding="async"
             draggable="false"
             referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (target.src.includes('wsrv.nl/?url=')) {
+                target.src = target.src.replace(/^.*wsrv\.nl\/\?url=/, 'https://');
+              }
+            }}
             className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105 group-active:scale-105"
           />
         )}

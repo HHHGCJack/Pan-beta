@@ -8,10 +8,10 @@ import { initClientSecurity } from './src/utils/clientSecurity';
 // Initialize passive client security and anti-scraping notice
 initClientSecurity();
 
-class ErrorBoundary extends React.Component<any, {hasError: boolean, error: any}> {
-  constructor(props: any) {
+class ErrorBoundary extends React.Component<{ children?: React.ReactNode }, { hasError: boolean; error: any }> {
+  public state: { hasError: boolean; error: any } = { hasError: false, error: null };
+  constructor(props: { children?: React.ReactNode }) {
     super(props);
-    this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
@@ -20,7 +20,7 @@ class ErrorBoundary extends React.Component<any, {hasError: boolean, error: any}
     if (this.state.hasError) {
       return <div style={{padding: 20, color: 'red'}}><h1>Error:</h1><pre>{this.state.error?.message}</pre></div>;
     }
-    return this.props.children;
+    return (this as any).props.children;
   }
 }
 
