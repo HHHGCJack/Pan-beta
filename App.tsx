@@ -13,14 +13,15 @@ import {
   SiteSettings, 
   ProductKey 
 } from './src/utils/settings';
-
-// Code-split heavy routes and modals to shrink initial landing bundle by >70%
-const ProductShowcase = lazy(() => import('./components/ProductShowcase').then(m => ({ default: m.ProductShowcase })));
-const ReadingPro = lazy(() => import('./components/ReadingPro').then(m => ({ default: m.ReadingPro })));
-const Laboratory = lazy(() => import('./components/Laboratory').then(m => ({ default: m.Laboratory })));
-const Admin = lazy(() => import('./components/Admin').then(m => ({ default: m.Admin })));
-const WelcomeModal = lazy(() => import('./components/WelcomeModal').then(m => ({ default: m.WelcomeModal })));
-const SupportModal = lazy(() => import('./components/SupportModal').then(m => ({ default: m.SupportModal })));
+import {
+  ProductShowcase,
+  ReadingPro,
+  Laboratory,
+  Admin,
+  WelcomeModal,
+  SupportModal,
+  startIdlePreload
+} from './src/utils/preload';
 
 // Create Context
 export const ThemeContext = createContext<ThemeContextType>({
@@ -274,6 +275,11 @@ function App() {
       window.removeEventListener(SETTINGS_EVENT, handleSettingsUpdate);
       clearInterval(pollTimer);
     };
+  }, []);
+
+  // Background idle preloading of all secondary routes and showcase assets
+  useEffect(() => {
+    startIdlePreload();
   }, []);
 
   // Listen to system theme preference changes in real-time

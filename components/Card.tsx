@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowUpRight, Lock } from 'lucide-react';
 import { ProductCardProps } from '../types';
 import { useTheme, translations as appTranslations } from '../App';
+import { preloadRoute } from '../src/utils/preload';
 
 export const Card: React.FC<ProductCardProps> = ({ 
   title, 
@@ -18,6 +19,12 @@ export const Card: React.FC<ProductCardProps> = ({
 }) => {
   const { themeMode, language } = useTheme();
   const isDark = themeMode === 'dark';
+
+  const handlePreload = () => {
+    if (!disabled && href && href !== '#') {
+      preloadRoute(href);
+    }
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     if (disabled || onClick) {
@@ -67,7 +74,10 @@ export const Card: React.FC<ProductCardProps> = ({
     <Link 
       to={href === '#' || disabled ? '#' : href} 
       onClick={handleClick}
-      onTouchStart={() => {}}
+      onMouseEnter={handlePreload}
+      onPointerDown={handlePreload}
+      onTouchStart={handlePreload}
+      onFocus={handlePreload}
       onContextMenu={(e) => e.preventDefault()}
       draggable="false"
       className={`group relative isolate overflow-hidden rounded-[2.5rem] 
