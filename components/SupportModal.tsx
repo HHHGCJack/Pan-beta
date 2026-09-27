@@ -26,11 +26,11 @@ export const SupportModal: React.FC<SupportModalProps> = ({
       const saved = localStorage.getItem('custom_support_qr');
       if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422') || saved.length > 500000)) {
         localStorage.removeItem('custom_support_qr');
-        return DEFAULT_SUPPORT_QR;
+        return SUPPORT_QR_BASE64;
       }
-      return saved || DEFAULT_SUPPORT_QR;
+      return saved || SUPPORT_QR_BASE64;
     } catch {
-      return DEFAULT_SUPPORT_QR;
+      return SUPPORT_QR_BASE64;
     }
   });
 
@@ -207,9 +207,10 @@ export const SupportModal: React.FC<SupportModalProps> = ({
             <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white shadow-2xl border border-gray-200/80 dark:border-white/40 flex flex-col items-center justify-center mx-auto w-full max-w-[340px] sm:max-w-[420px] transition-all duration-300">
               <div className="overflow-hidden rounded-xl sm:rounded-2xl w-full flex items-center justify-center">
                 <img 
-                  src={qrImage || DEFAULT_SUPPORT_QR} 
+                  src={qrImage || SUPPORT_QR_BASE64} 
                   alt="Support QR Code" 
                   loading="eager"
+                  fetchPriority="high"
                   decoding="async"
                   referrerPolicy="no-referrer"
                   onError={handleQrError}

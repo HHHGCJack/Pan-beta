@@ -98,7 +98,8 @@ export const Card: React.FC<ProductCardProps> = ({
           <img 
             src={imageUrl} 
             alt={title} 
-            loading="lazy"
+            loading="eager"
+            fetchPriority="high"
             decoding="async"
             draggable="false"
             referrerPolicy="no-referrer"

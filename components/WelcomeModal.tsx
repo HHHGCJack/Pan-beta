@@ -53,11 +53,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
       const saved = localStorage.getItem('custom_support_qr');
       if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422') || saved.length > 500000)) {
         localStorage.removeItem('custom_support_qr');
-        return DEFAULT_SUPPORT_QR;
+        return SUPPORT_QR_BASE64;
       }
-      return saved || DEFAULT_SUPPORT_QR;
+      return saved || SUPPORT_QR_BASE64;
     } catch {
-      return DEFAULT_SUPPORT_QR;
+      return SUPPORT_QR_BASE64;
     }
   });
 
@@ -690,13 +690,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 overflow-y-auto pointer-events-auto overscroll-none"
           id="welcome-modal-container"
         >
-          {/* Backdrop overlay with elegant translucent glass blur */}
+          {/* Transparent Backdrop (Does not darken background - pure liquid glass presentation) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 bg-transparent cursor-pointer"
             onClick={handleClose}
           />
 
@@ -858,8 +858,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                   }`}>
                     <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center">
                       <img 
-                        src={qrImage || DEFAULT_SUPPORT_QR} 
+                        src={qrImage || SUPPORT_QR_BASE64} 
                         loading="eager" 
+                        fetchPriority="high"
                         decoding="async" 
                         referrerPolicy="no-referrer"
                         onError={handleQrError}
