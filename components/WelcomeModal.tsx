@@ -681,23 +681,23 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
   const t = translations[language] || translations.zh;
 
-  // Pure luminous liquid crystal glass modal styling - NO BLACK BACKGROUND
+  // Pure liquid crystal glass modal styling with refractive highlight and specular translucency
   const glassCardStyle = isDark
-    ? 'bg-zinc-900/90 backdrop-blur-2xl border border-white/20 text-white shadow-[0_25px_80px_rgba(0,0,0,0.35),inset_0_1.5px_2px_rgba(255,255,255,0.2)]'
-    : 'bg-white/95 backdrop-blur-2xl border border-white/80 text-gray-900 shadow-[0_25px_80px_rgba(0,0,0,0.08),inset_0_2px_3px_rgba(255,255,255,1)]';
+    ? 'liquid-glass liquid-glass-dark text-white shadow-[0_40px_100px_rgba(0,0,0,0.8),inset_0_1.5px_2px_rgba(255,255,255,0.25)]'
+    : 'liquid-glass liquid-glass-light text-gray-900 shadow-[0_40px_100px_rgba(0,0,0,0.12),inset_0_2px_3px_rgba(255,255,255,1)]';
 
   const tabActiveStyle = isDark
-    ? 'bg-white/20 text-white font-bold border border-white/25 shadow-sm'
-    : 'bg-white text-gray-900 font-bold border border-gray-200/80 shadow-sm';
+    ? 'liquid-glass-pill-dark text-white font-bold'
+    : 'liquid-glass-pill-light text-gray-900 font-bold';
 
   const tabInactiveStyle = isDark
-    ? 'text-white/70 hover:text-white hover:bg-white/[0.08] border border-transparent'
-    : 'text-gray-600 hover:text-gray-950 hover:bg-white/60 border border-transparent';
+    ? 'text-white/60 hover:text-white hover:bg-white/[0.08] border border-transparent'
+    : 'text-gray-600 hover:text-gray-950 hover:bg-white/30 border border-transparent';
 
-  // Inner cards: high-transparency luminous glass facets - NO black background
+  // Inner cards: high-transparency liquid glass facets
   const itemCardStyle = isDark
-    ? 'bg-white/10 hover:bg-white/15 text-white/90 border border-white/15 transition-all duration-200'
-    : 'bg-white/80 hover:bg-white/95 text-gray-800 border border-white/80 shadow-sm transition-all duration-200';
+    ? 'liquid-glass-pill-dark text-white/90 hover:bg-white/[0.12] transition-all duration-200'
+    : 'liquid-glass-pill-light text-gray-800 hover:bg-white/80 transition-all duration-200';
 
   return (
     <AnimatePresence>
@@ -790,8 +790,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
             {/* Modal Body - Scrollable with fixed hardware layer */}
             <div className="relative z-10 px-6 sm:px-8 py-4 overflow-y-auto overscroll-contain flex-1 min-h-0 scrollbar-hide space-y-6 transform-gpu [transform:translateZ(0)]">
-              <div className={`space-y-6 ${activeTab === 'intro' ? 'block' : 'hidden'}`}>
-                {/* Website Intro Card */}
+              {activeTab === 'intro' ? (
+                <div className="space-y-6">
+                  {/* Website Intro Card */}
                   <div className={`p-4 sm:p-5 rounded-2xl ${itemCardStyle}`}>
                     <div className="flex items-center space-x-2.5 mb-2">
                       <div className="p-1.5 rounded-lg bg-blue-500/15 text-blue-500">
@@ -852,9 +853,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     </div>
                   </div>
                 </div>
-
-                {/* Support Option Tab - Pre-rendered for instant 0ms zero-lag display */}
-                <div className={`flex flex-col items-center text-center py-2 sm:py-3 space-y-4 ${activeTab === 'support' ? 'block' : 'hidden'}`}>
+              ) : (
+                /* Support Option Tab - Enlarged QR Container with Clean Presentation */
+                <div className="flex flex-col items-center text-center py-2 sm:py-3 space-y-4">
                   <div className="flex flex-col items-center">
                     <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-rose-500/10 text-rose-500 shadow-inner">
                       <Coffee size={20} className="text-rose-500 shrink-0" />
@@ -868,10 +869,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                   {/* Elegant Enlarged QR Image Container with Liquid Glass Specular Frame */}
                   <div className={`relative p-4 sm:p-6 rounded-3xl max-w-[380px] sm:max-w-[450px] w-full shadow-2xl transition-all duration-300 ${
                     isDark 
-                      ? 'bg-white/10 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.3),inset_0_1px_1px_rgba(255,255,255,0.25)]' 
-                      : 'bg-white/60 border border-white/80 shadow-[0_20px_50px_rgba(0,0,0,0.06),inset_0_1.5px_2px_rgba(255,255,255,0.95)]'
+                      ? 'bg-white/5 border border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.25)]' 
+                      : 'bg-white/40 border border-white/80 shadow-[0_20px_50px_rgba(0,0,0,0.08),inset_0_1.5px_2px_rgba(255,255,255,0.95)]'
                   }`}>
-                    <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center min-h-[300px]">
+                    <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center">
                       <img 
                         src={qrImage || DEFAULT_SUPPORT_QR} 
                         loading="eager" 
@@ -909,11 +910,12 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                     </div>
                   </div>
                 </div>
+              )}
             </div>
 
             {/* Modal Footer - Fully transparent liquid glass seamlessly connected to dialog frame */}
             <div className={`relative z-10 shrink-0 px-5 py-3.5 sm:px-8 sm:py-4 border-t border-black/[0.06] dark:border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-3 transform-gpu [transform:translateZ(0)] ${
-              isDark ? 'bg-white/[0.04]' : 'bg-black/[0.02]'
+              isDark ? 'bg-black/15' : 'bg-white/15'
             }`}>
               {/* Remember choice today checkbox */}
               <label className="flex items-center space-x-2.5 cursor-pointer select-none text-xs text-gray-500 dark:text-gray-400 py-1 touch-manipulation">
