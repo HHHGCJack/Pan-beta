@@ -148,14 +148,14 @@ export const SupportModal: React.FC<SupportModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-3 sm:p-6 overflow-hidden pointer-events-auto overscroll-none">
-          {/* Soft Liquid Glass Backdrop */}
+          {/* Transparent Backdrop (No black darkening behind modal) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 bg-transparent cursor-pointer"
           />
 
           {/* Standalone Support Card - Spacious, Prominent & Non-scrolling */}
