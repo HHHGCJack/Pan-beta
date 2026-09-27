@@ -20,14 +20,27 @@ export const SupportModal: React.FC<SupportModalProps> = ({
 }) => {
   const { themeMode, language } = useTheme();
   const isDark = themeMode === 'dark';
+  const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrImage, setQrImage] = useState<string>(() => {
-    const saved = localStorage.getItem('custom_support_qr');
-    if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422'))) {
-      localStorage.removeItem('custom_support_qr');
+    try {
+      const saved = localStorage.getItem('custom_support_qr');
+      if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422') || saved.length > 500000)) {
+        localStorage.removeItem('custom_support_qr');
+        return DEFAULT_SUPPORT_QR;
+      }
+      return saved || DEFAULT_SUPPORT_QR;
+    } catch {
       return DEFAULT_SUPPORT_QR;
     }
-    return saved || DEFAULT_SUPPORT_QR;
   });
+
+  const handleQrError = () => {
+    const nextIndex = qrSourceIndex + 1;
+    if (nextIndex < SUPPORT_QR_SOURCES.length) {
+      setQrSourceIndex(nextIndex);
+      setQrImage(SUPPORT_QR_SOURCES[nextIndex]);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -194,17 +207,12 @@ export const SupportModal: React.FC<SupportModalProps> = ({
             <div className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white shadow-2xl border border-gray-200/80 dark:border-white/40 flex flex-col items-center justify-center mx-auto w-full max-w-[340px] sm:max-w-[420px] transition-all duration-300">
               <div className="overflow-hidden rounded-xl sm:rounded-2xl w-full flex items-center justify-center">
                 <img 
-                  src={qrImage || SUPPORT_QR_BASE64} 
+                  src={qrImage || DEFAULT_SUPPORT_QR} 
                   alt="Support QR Code" 
                   loading="eager"
                   decoding="async"
                   referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src !== SUPPORT_QR_BASE64) {
-                      target.src = SUPPORT_QR_BASE64;
-                    }
-                  }}
+                  onError={handleQrError}
                   className="w-full h-auto rounded-xl object-contain max-h-[340px] sm:max-h-[420px]" 
                 />
               </div>

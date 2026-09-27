@@ -25,6 +25,7 @@ import {
   SUPPORT_QR_BASE64, 
   SUPPORT_QR_SOURCES 
 } from '../src/assets/support_qr_base64';
+import { scrollToElementSmoothly } from '../src/utils/smoothScroll';
 
 interface WelcomeModalProps {
   isOpen?: boolean;
@@ -44,14 +45,27 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   const [activeTab, setActiveTab] = useState<'intro' | 'support'>(initialTab);
   const [copiedNote, setCopiedNote] = useState(false);
   const [dontShowToday, setDontShowToday] = useState(false);
+  const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrImage, setQrImage] = useState<string>(() => {
-    const saved = localStorage.getItem('custom_support_qr');
-    if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422'))) {
-      localStorage.removeItem('custom_support_qr');
+    try {
+      const saved = localStorage.getItem('custom_support_qr');
+      if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422') || saved.length > 500000)) {
+        localStorage.removeItem('custom_support_qr');
+        return DEFAULT_SUPPORT_QR;
+      }
+      return saved || DEFAULT_SUPPORT_QR;
+    } catch {
       return DEFAULT_SUPPORT_QR;
     }
-    return saved || DEFAULT_SUPPORT_QR;
   });
+
+  const handleQrError = () => {
+    const nextIndex = qrSourceIndex + 1;
+    if (nextIndex < SUPPORT_QR_SOURCES.length) {
+      setQrSourceIndex(nextIndex);
+      setQrImage(SUPPORT_QR_SOURCES[nextIndex]);
+    }
+  };
 
   const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalOpen;
 
@@ -130,6 +144,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     } else {
       setInternalOpen(false);
     }
+  };
+
+  const handleExplore = () => {
+    handleClose();
+    setTimeout(() => {
+      scrollToElementSmoothly('content-section');
+    }, 120);
   };
 
   const translations = {
@@ -778,16 +799,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                   }`}>
                     <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center">
                       <img 
-                        src={qrImage || SUPPORT_QR_BASE64} 
+                        src={qrImage || DEFAULT_SUPPORT_QR} 
                         loading="eager" 
                         decoding="async" 
                         referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== SUPPORT_QR_BASE64) {
-                            target.src = SUPPORT_QR_BASE64;
-                          }
-                        }}
+                        onError={handleQrError}
                         className="w-full h-auto max-h-[380px] sm:max-h-[450px] rounded-xl object-contain" 
                         alt="Support QR Code" 
                       />
@@ -802,7 +818,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
                       <div className="flex items-center gap-2 w-full justify-center">
                         <a
-                          href={qrImage || SUPPORT_QR_BASE64}
+                          href={qrImage || DEFAULT_SUPPORT_QR}
                           download="GongPan_Support_QR.jpg"
                           className={`w-full max-w-[340px] sm:max-w-[380px] py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2 transition-all duration-200 active:scale-95 ${
                             isDark 
@@ -852,7 +868,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                       <span>{t.supportBtn}</span>
                     </button>
                     <button
-                      onClick={handleClose}
+                      onClick={handleExplore}
                       className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 transition-all duration-200 active:scale-95 flex items-center space-x-1"
                     >
                       <span>{t.exploreBtn}</span>
