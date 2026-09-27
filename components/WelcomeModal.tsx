@@ -80,8 +80,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   useEffect(() => {
     let active = true;
 
-    // 1. Try server API with timestamp cache-buster
-    fetch(`/api/support-qr?_t=${Date.now()}`, { cache: 'no-store' })
+    const saved = localStorage.getItem('custom_support_qr');
+    if (saved && active) {
+      setQrImage(saved);
+      return;
+    }
+
+    // Check custom server QR in background with standard caching
+    fetch('/api/support-qr', { cache: 'default' })
       .then(res => {
         if (res.ok) return res.blob();
         throw new Error('No custom server qr');
@@ -92,20 +98,16 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         setQrImage(url);
       })
       .catch(() => {
-        // 2. Try Supabase cloud storage directly
         try {
           const { data } = supabase.storage.from('books-media').getPublicUrl('custom-assets/support-qr.jpg');
           if (data?.publicUrl && active) {
             const img = new Image();
             img.onload = () => {
-              if (active) setQrImage(`${data.publicUrl}?_t=${Date.now()}`);
+              if (active) setQrImage(data.publicUrl);
             };
-            img.src = `${data.publicUrl}?_t=${Date.now()}`;
+            img.src = data.publicUrl;
           }
         } catch {}
-
-        const saved = localStorage.getItem('custom_support_qr');
-        if (saved && active) setQrImage(saved);
       });
 
     return () => { active = false; };
@@ -861,10 +863,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                         src={qrImage || SUPPORT_QR_BASE64} 
                         loading="eager" 
                         fetchPriority="high"
-                        decoding="async" 
+                        decoding="sync" 
                         referrerPolicy="no-referrer"
                         onError={handleQrError}
-                        className="w-full h-auto max-h-[380px] sm:max-h-[450px] rounded-xl object-contain" 
+                        className="w-full h-auto max-h-[380px] sm:max-h-[450px] rounded-xl object-contain transform-gpu [content-visibility:visible]" 
                         alt="Support QR Code" 
                       />
                     </div>

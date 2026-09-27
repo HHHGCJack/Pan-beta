@@ -8,6 +8,17 @@ import { initClientSecurity } from './src/utils/clientSecurity';
 // Initialize passive client security and anti-scraping notice
 initClientSecurity();
 
+// Ultra-high priority pre-decoding of payment QR into GPU memory
+if (typeof window !== 'undefined') {
+  try {
+    const preheatedQr = new Image();
+    preheatedQr.src = '/support-qr.webp';
+    if ('decode' in preheatedQr) {
+      preheatedQr.decode().catch(() => {});
+    }
+  } catch {}
+}
+
 class ErrorBoundary extends React.Component<{ children?: React.ReactNode }, { hasError: boolean; error: any }> {
   public state: { hasError: boolean; error: any } = { hasError: false, error: null };
   constructor(props: { children?: React.ReactNode }) {
