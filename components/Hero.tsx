@@ -47,11 +47,11 @@ export const Hero: React.FC = () => {
   return (
     <section 
       id="hero-cover"
-      className={`relative w-full h-screen min-h-screen sm:h-[100dvh] sm:min-h-[100dvh] flex flex-col items-center justify-center transition-colors duration-500 select-none pt-16 md:pt-20 pb-20 sm:pb-24`}
+      className={`relative w-full h-screen min-h-screen sm:h-[100dvh] sm:min-h-[100dvh] flex items-center justify-center transition-colors duration-500 select-none px-4`}
     >
-      {/* Main Center Brand Cover - Optically Balanced Midpoint */}
-      <div className="flex flex-col items-center justify-center w-full px-4 text-center my-auto -translate-y-2 sm:-translate-y-4">
-        <div className="relative h-28 sm:h-36 md:h-48 w-full flex justify-center items-center overflow-visible">
+      {/* Main Center Brand Cover - Pure Dead-Center Alignment */}
+      <div className="flex flex-col items-center justify-center w-full max-w-5xl mx-auto text-center">
+        <div className="relative h-32 sm:h-44 md:h-56 lg:h-64 w-full flex items-center justify-center overflow-visible">
           {words.map((word, index) => {
             const isActive = index === activeIndex;
             return (
@@ -61,15 +61,15 @@ export const Hero: React.FC = () => {
                   isActive
                     ? 'opacity-100 transform translate-y-0 scale-100 pointer-events-auto'
                     : 'opacity-0 transform translate-y-4 scale-95 pointer-events-none'
-                } ${themeMode === 'dark' ? 'text-white drop-shadow-[0_2px_20px_rgba(255,255,255,0.25)]' : 'text-gray-900 drop-shadow-sm'}`}
+                } ${themeMode === 'dark' ? 'text-white drop-shadow-[0_2px_24px_rgba(255,255,255,0.28)]' : 'text-gray-900 drop-shadow-sm'}`}
                 style={{
                   fontFamily: '"SF Pro Rounded", "Arial Rounded MT Bold", "Nunito", "Varela Round", sans-serif',
                   fontWeight: 900,
                   fontSize: ['cn', 'jp', 'kr'].includes(word.lang) 
-                    ? 'clamp(2.5rem, 11vw, 6.8rem)' 
-                    : 'clamp(2.8rem, 13vw, 8rem)',
-                  lineHeight: 1.25,
-                  letterSpacing: '-0.02em',
+                    ? 'clamp(3.8rem, 16vw, 9.6rem)' 
+                    : 'clamp(4.2rem, 18vw, 11rem)',
+                  lineHeight: 1.15,
+                  letterSpacing: '-0.03em',
                   willChange: isActive ? 'transform, opacity' : 'auto'
                 }}
               >
@@ -80,7 +80,7 @@ export const Hero: React.FC = () => {
         </div>
 
         <p 
-          className={`mt-3 sm:mt-5 md:mt-6 text-[11px] sm:text-xs md:text-sm font-semibold tracking-[0.3em] sm:tracking-[0.4em] uppercase ${
+          className={`mt-3 sm:mt-5 md:mt-6 text-xs sm:text-sm md:text-base font-semibold tracking-[0.35em] sm:tracking-[0.45em] uppercase ${
             themeMode === 'dark' ? 'text-gray-400' : 'text-gray-500'
           }`}
         >
@@ -89,7 +89,7 @@ export const Hero: React.FC = () => {
       </div>
 
       {/* Floating Bottom Scroll Prompt Indicator - Positioned naturally near bottom edge */}
-      <div className="absolute bottom-5 sm:bottom-6 md:bottom-8 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-auto">
+      <div className="absolute bottom-5 sm:bottom-7 md:bottom-9 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center pointer-events-auto">
         <motion.button
           onClick={scrollToContent}
           initial={{ opacity: 0 }}
