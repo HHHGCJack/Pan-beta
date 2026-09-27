@@ -20,11 +20,14 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../App';
 import { Logo } from './Logo';
+import { supabase } from '../src/lib/supabase';
 import { 
   DEFAULT_SUPPORT_QR, 
+  SUPPORT_QR_LOCAL,
   SUPPORT_QR_BASE64, 
   SUPPORT_QR_SOURCES 
 } from '../src/assets/support_qr_base64';
+import { scrollToElementSmoothly } from '../src/utils/smoothScroll';
 
 interface WelcomeModalProps {
   isOpen?: boolean;
@@ -44,28 +47,98 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
   const [activeTab, setActiveTab] = useState<'intro' | 'support'>(initialTab);
   const [copiedNote, setCopiedNote] = useState(false);
   const [dontShowToday, setDontShowToday] = useState(false);
+  const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrImage, setQrImage] = useState<string>(() => {
-    const saved = localStorage.getItem('custom_support_qr');
-    if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422'))) {
-      localStorage.removeItem('custom_support_qr');
+    try {
+      const saved = localStorage.getItem('custom_support_qr');
+      if (saved && (saved.includes('nloln.de') || saved.includes('img2.') || saved.includes('support_qr_code_1787368553422') || saved.length > 500000)) {
+        localStorage.removeItem('custom_support_qr');
+        return DEFAULT_SUPPORT_QR;
+      }
+      return saved || DEFAULT_SUPPORT_QR;
+    } catch {
       return DEFAULT_SUPPORT_QR;
     }
-    return saved || DEFAULT_SUPPORT_QR;
   });
 
-  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalOpen;
-
-  useEffect(() => {
-    if (!welcomeModalEnabled && internalOpen) {
-      setInternalOpen(false);
+  const handleQrError = () => {
+    const nextIndex = qrSourceIndex + 1;
+    if (nextIndex < SUPPORT_QR_SOURCES.length) {
+      setQrSourceIndex(nextIndex);
+      setQrImage(SUPPORT_QR_SOURCES[nextIndex]);
     }
-  }, [welcomeModalEnabled, internalOpen]);
+  };
+
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalOpen;
 
   useEffect(() => {
     if (externalIsOpen && initialTab) {
       setActiveTab(initialTab);
     }
   }, [externalIsOpen, initialTab]);
+
+  useEffect(() => {
+    let active = true;
+
+    // 1. Try server API with timestamp cache-buster
+    fetch(`/api/support-qr?_t=${Date.now()}`, { cache: 'no-store' })
+      .then(res => {
+        if (res.ok) return res.blob();
+        throw new Error('No custom server qr');
+      })
+      .then(blob => {
+        if (!active || blob.size < 200) return;
+        const url = URL.createObjectURL(blob);
+        setQrImage(url);
+      })
+      .catch(() => {
+        // 2. Try Supabase cloud storage directly
+        try {
+          const { data } = supabase.storage.from('books-media').getPublicUrl('custom-assets/support-qr.jpg');
+          if (data?.publicUrl && active) {
+            const img = new Image();
+            img.onload = () => {
+              if (active) setQrImage(`${data.publicUrl}?_t=${Date.now()}`);
+            };
+            img.src = `${data.publicUrl}?_t=${Date.now()}`;
+          }
+        } catch {}
+
+        const saved = localStorage.getItem('custom_support_qr');
+        if (saved && active) setQrImage(saved);
+      });
+
+    return () => { active = false; };
+  }, []);
+
+  const handleDownload = async () => {
+    try {
+      const response = await fetch(qrImage || DEFAULT_SUPPORT_QR, { mode: 'cors' });
+      if (!response.ok) throw new Error('Fetch failed');
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = 'GongPan_Support_QR.jpg';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+    } catch {
+      // Fallback direct link download
+      const link = document.createElement('a');
+      link.href = qrImage || DEFAULT_SUPPORT_QR;
+      link.download = 'GongPan_Support_QR.jpg';
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   // Pre-warm support QR image in idle time
   useEffect(() => {
@@ -130,6 +203,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
     } else {
       setInternalOpen(false);
     }
+  };
+
+  const handleExplore = () => {
+    handleClose();
+    setTimeout(() => {
+      scrollToElementSmoothly('content-section');
+    }, 120);
   };
 
   const translations = {
@@ -610,13 +690,13 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
           className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 overflow-y-auto pointer-events-auto overscroll-none"
           id="welcome-modal-container"
         >
-          {/* Backdrop overlay (Transparent, does not darken background) */}
+          {/* Backdrop overlay with elegant translucent glass blur */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-transparent cursor-pointer"
+            className="absolute inset-0 bg-black/35 dark:bg-black/60 backdrop-blur-sm cursor-pointer"
             onClick={handleClose}
           />
 
@@ -627,7 +707,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.95, opacity: 0, y: 12 }}
             transition={{ type: 'spring', damping: 28, stiffness: 380 }}
-            className={`relative w-full max-w-2xl sm:max-w-3xl my-auto max-h-[90vh] flex flex-col rounded-[2.5rem] overflow-hidden isolate transform-gpu shadow-2xl [transform:translateZ(0)] ${glassCardStyle}`}
+            className={`relative z-10 w-full max-w-2xl sm:max-w-3xl my-auto max-h-[90vh] flex flex-col rounded-[2.5rem] overflow-hidden isolate transform-gpu shadow-2xl [transform:translateZ(0)] ${glassCardStyle}`}
             role="dialog"
             aria-modal="true"
           >
@@ -778,16 +858,11 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                   }`}>
                     <div className="bg-white p-3.5 sm:p-5 rounded-2xl shadow-sm overflow-hidden flex items-center justify-center">
                       <img 
-                        src={qrImage || SUPPORT_QR_BASE64} 
+                        src={qrImage || DEFAULT_SUPPORT_QR} 
                         loading="eager" 
                         decoding="async" 
                         referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== SUPPORT_QR_BASE64) {
-                            target.src = SUPPORT_QR_BASE64;
-                          }
-                        }}
+                        onError={handleQrError}
                         className="w-full h-auto max-h-[380px] sm:max-h-[450px] rounded-xl object-contain" 
                         alt="Support QR Code" 
                       />
@@ -801,10 +876,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                       </div>
 
                       <div className="flex items-center gap-2 w-full justify-center">
-                        <a
-                          href={qrImage || SUPPORT_QR_BASE64}
-                          download="GongPan_Support_QR.jpg"
-                          className={`w-full max-w-[340px] sm:max-w-[380px] py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2 transition-all duration-200 active:scale-95 ${
+                        <button
+                          type="button"
+                          onClick={handleDownload}
+                          className={`w-full max-w-[340px] sm:max-w-[380px] py-2 px-4 rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center space-x-2 transition-all duration-200 active:scale-95 cursor-pointer ${
                             isDark 
                               ? 'bg-white/10 hover:bg-white/15 text-white border border-white/15 hover:border-white/30' 
                               : 'bg-black/5 hover:bg-black/10 text-gray-800 border border-black/10 hover:border-black/20'
@@ -813,7 +888,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                         >
                           <Download size={14} />
                           <span>保存收款码到本地</span>
-                        </a>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -852,7 +927,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                       <span>{t.supportBtn}</span>
                     </button>
                     <button
-                      onClick={handleClose}
+                      onClick={handleExplore}
                       className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-500/25 transition-all duration-200 active:scale-95 flex items-center space-x-1"
                     >
                       <span>{t.exploreBtn}</span>

@@ -72,6 +72,7 @@ import {
   GongPanChatMessenger 
 } from './ProductWorkstations';
 import { BetaApplyModal } from './BetaApplyModal';
+import { preloadRoute } from '../src/utils/preload';
 
 // Normalized category matcher
 const normalizeCategoryId = (rawId: string | undefined): string => {
@@ -421,7 +422,10 @@ export const ProductShowcase: React.FC = () => {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as any });
-  }, [categoryId]);
+    if (product.targetUrl && product.targetUrl.startsWith('/')) {
+      preloadRoute(product.targetUrl);
+    }
+  }, [categoryId, product.targetUrl]);
 
   // Handle ESC key to smooth return
   useEffect(() => {
