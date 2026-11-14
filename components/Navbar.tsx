@@ -1,3 +1,4 @@
+import { openBestPansouNode } from '../src/utils/pansouRouter';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -436,7 +437,7 @@ export const Navbar: React.FC = () => {
     }
   };
 
-  const handleShowcaseVisit = () => {
+  const handleShowcaseVisit = async () => {
     if (!currentShowcase) return;
     if ((currentShowcase as any).productId && isProductEnabled && !isProductEnabled((currentShowcase as any).productId)) {
       if (openProductNotice) {
@@ -452,6 +453,12 @@ export const Navbar: React.FC = () => {
       } else {
         showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service suspended due to policy');
       }
+      return;
+    }
+    if (currentShowcase.requiresPansouCheck) {
+      showToast(language === 'zh' ? '正在检测可用线路…' : 'Checking available routes…');
+      try { await openBestPansouNode(); }
+      catch { showToast(language === 'zh' ? '暂时无法连接两条线路，请稍后重试' : 'Both routes are unreachable. Please try again shortly.'); }
       return;
     }
     if (currentShowcase.isExternal) {
