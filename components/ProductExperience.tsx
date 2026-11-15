@@ -1,5 +1,6 @@
+import { useCampaignScroll } from '../src/utils/useCampaignScroll';
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { motion, useReducedMotion, useTransform } from 'motion/react';
 import { ArrowRight, Search, BookOpen, Send, ChevronLeft, ChevronRight, Bookmark, X, RotateCcw, Image as ImageIcon, Languages, Minus, Plus, SlidersHorizontal } from 'lucide-react';
 import { PRODUCT_VISUALS } from '../src/data/productArt';
 
@@ -93,7 +94,7 @@ const ChatDemo = ({zh,onApplyBeta}:DemoProps) => {
 
 export const ProductExperience:React.FC<Props> = ({productId,language,onVisit,onApplyBeta,isConnecting,isDark}) => {
   const ref=useRef<HTMLDivElement>(null),reduced=!!useReducedMotion(),zh=language==='zh';
-  const {scrollYProgress}=useScroll({target:ref,offset:['start end','end start']});
+  const {scrollYProgress}=useCampaignScroll({target:ref,offset:['start end','end start']});
   const leftY=useTransform(scrollYProgress,[0,1],[75,-100]),rightY=useTransform(scrollYProgress,[0,1],[-50,95]);
   const rotate=useTransform(scrollYProgress,[0,1],[-9,9]);
   const demoProps={zh,onVisit,onApplyBeta,isConnecting};

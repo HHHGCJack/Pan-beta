@@ -1,5 +1,6 @@
+import { useCampaignScroll } from '../src/utils/useCampaignScroll';
 import React, { useRef } from 'react';
-import { motion, MotionValue, useReducedMotion, useScroll, useTransform } from 'motion/react';
+import { motion, MotionValue, useReducedMotion, useTransform } from 'motion/react';
 import { Search, Film, Music2, BookOpen, FileText, Globe2, ScanLine, Languages } from 'lucide-react';
 import { PRODUCT_VISUALS } from '../src/data/productArt';
 import { ShowcaseProduct } from '../src/data/showcases';
@@ -100,7 +101,7 @@ const ConversationOrbit = ({progress,product,glass}:SceneProps) => {
 
 export const ProductMaterialSequence:React.FC<{productId:string;product:ShowcaseProduct;zh:boolean;isDark:boolean}> = ({productId,product,zh,isDark}) => {
   const ref=useRef<HTMLElement>(null), reduced=!!useReducedMotion();
-  const {scrollYProgress:progress}=useScroll({target:ref,offset:['start start','end end']});
+  const {scrollYProgress:progress}=useCampaignScroll({target:ref,offset:['start start','end end']});
   const glass=`liquid-glass ${isDark?'liquid-glass-dark':'liquid-glass-light'}`;
   const props={progress,product,glass,zh};
   return <section ref={ref} className={`campaign-macro sequence--${productId} ${reduced?'sequence--static':''}`} aria-label={zh?'产品概览':'Product overview'}>

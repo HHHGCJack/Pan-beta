@@ -1,7 +1,8 @@
+import { useCampaignScroll } from '../src/utils/useCampaignScroll';
 import React, { useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
-import { ChevronDown, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { motion, useReducedMotion, useTransform } from 'motion/react';
+import { ChevronDown, ArrowRight, ArrowUpRight, Search, BookOpen, SlidersHorizontal, MessageCircle } from 'lucide-react';
 import { showcaseData, ShowcaseProduct } from '../src/data/showcases';
 import { PRODUCT_VISUALS, PRODUCT_SCENES } from '../src/data/productArt';
 import { preloadRoute } from '../src/utils/preload';
@@ -10,6 +11,9 @@ import { ProductParallaxStage } from './ProductParallaxStage';
 import { ProductMaterialSequence } from './ProductMaterialSequence';
 import '../src/styles/product-campaign.css';
 import '../src/styles/product-art-direction.css';
+
+const MotionLink = motion.create(Link);
+const COLLECTION_ICONS = { pansou: Search, 'reading-pro': BookOpen, 'ai-agent': SlidersHorizontal, chat: MessageCircle };
 
 const DIRECTION: Record<string, { label: string; color: string; zh: string[]; en: string[] }> = {
   pansou: { label: 'THE ART OF DISCOVERY', color: '#f59e0b',
@@ -36,7 +40,7 @@ const Reveal: React.FC<{ children: React.ReactNode; className?: string }> = ({ c
 const FeatureRow: React.FC<{ feature: ShowcaseProduct['features'][number]; index: number }> = ({ feature, index }) => {
   const ref = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion();
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] });
+  const { scrollYProgress } = useCampaignScroll({ target: ref, offset: ['start end', 'end start'] });
   const y = useTransform(scrollYProgress, [0, .42, 1], [160 + index * 22, 0, -150 - index * 18]);
   const rotate = useTransform(scrollYProgress, [0, .42, 1], [index % 2 ? 7 : -7, 0, index % 2 ? -5 : 5]);
   const scale = useTransform(scrollYProgress, [0, .42, 1], [.84, 1, .92]);
@@ -46,7 +50,7 @@ const FeatureRow: React.FC<{ feature: ShowcaseProduct['features'][number]; index
   </motion.div>;
 };
 
-const ImmersiveScene: React.FC<{ progress: ReturnType<typeof useScroll>['scrollYProgress']; index: number; title: string; body: string; reduced: boolean }> = ({ progress, index, title, body, reduced }) => {
+const ImmersiveScene: React.FC<{ progress: ReturnType<typeof useCampaignScroll>['scrollYProgress']; index: number; title: string; body: string; reduced: boolean }> = ({ progress, index, title, body, reduced }) => {
   const stops = index === 0 ? [0, .20, .34, 1] : index === 1 ? [.20, .34, .54, .70] : [.54, .70, .96, 1];
   const opacity = useTransform(progress, stops, index === 0 ? [1, 1, 0, 0] : index === 1 ? [0, 1, 1, 0] : [0, 1, 1, 1]);
   const y = useTransform(progress, [Math.max(0, index * .3 - .07), index * .3 + .1], [45, 0]);
@@ -72,12 +76,12 @@ export const ProductVisualStory: React.FC<Props> = ({ productId, product, langua
   const scenes = PRODUCT_SCENES[productId];
   const glassClass = `liquid-glass ${isDark ? 'liquid-glass-dark' : 'liquid-glass-light'}`;
   const pillClass = isDark ? 'liquid-glass-pill-dark' : 'liquid-glass-pill-light';
-  const { scrollYProgress: heroProgress } = useScroll({ target: heroRef, offset: ['start start', 'end end'] });
-  const { scrollYProgress: detailProgress } = useScroll({ target: detailRef, offset: ['start end', 'end start'] });
+  const { scrollYProgress: heroProgress } = useCampaignScroll({ target: heroRef, offset: ['start start', 'end end'] });
+  const { scrollYProgress: detailProgress } = useCampaignScroll({ target: detailRef, offset: ['start end', 'end start'] });
   const detailScale = useTransform(detailProgress, [0, .55, 1], [.5, 1.4, .75]);
   const detailY = useTransform(detailProgress, [0, 1], ['60%', '-50%']);
   const detailRotate = useTransform(detailProgress, [0, 1], [-34, 38]);
-  const { scrollYProgress: pageProgress } = useScroll({ target: pageRef, offset: ['start start', 'end end'] });
+  const { scrollYProgress: pageProgress } = useCampaignScroll({ target: pageRef, offset: ['start start', 'end end'] });
   const variables = {
     '--campaign-bg': isDark ? '#09090b' : '#f6f7fa',
     '--campaign-ink': isDark ? '#f4f4f5' : '#111827',
@@ -91,11 +95,11 @@ export const ProductVisualStory: React.FC<Props> = ({ productId, product, langua
   return <main ref={pageRef} className={`product-campaign campaign--${productId} ${isDark ? 'product-campaign--dark' : ''}`} style={variables}>
     <motion.div aria-hidden="true" className="campaign-page-progress" style={{ scaleX: pageProgress }} />
     <section className="campaign-gateway" aria-labelledby="campaign-title">
-      <div className="campaign-gateway-copy campaign-container">
+      <div className={`campaign-gateway-copy campaign-container campaign-glass-frame ${glassClass}`}>
         <p className="campaign-gateway-tag">{product.tag}</p>
         <h1 id="campaign-title">{product.heroHeadline}</h1>
         <p className="campaign-gateway-description">{product.heroSubheadline}</p>
-        <div className="campaign-gateway-actions"><button className={`campaign-button campaign-button--gateway ${pillClass}`} onClick={onVisit} disabled={isConnecting}>{actionLabel}<ArrowUpRight size={17} /></button></div>
+        <div className="campaign-gateway-actions"><button className={`campaign-button campaign-button--gateway liquid-glass liquid-specular-highlight ${pillClass}`} onClick={onVisit} disabled={isConnecting}>{actionLabel}<ArrowUpRight size={17} /></button></div>
         {productId === 'chat' && <p className="campaign-gateway-beta">{zh ? '内测阶段 · 仅受邀用户可注册' : 'In beta · Registration by invitation'} <button onClick={onApplyBeta}>{zh ? '申请内测' : 'Apply for beta'}</button></p>}
       </div>
       <div className="campaign-gateway-arrow">
@@ -141,14 +145,32 @@ export const ProductVisualStory: React.FC<Props> = ({ productId, product, langua
     </section>
 
     <section className="campaign-finale" aria-label={zh ? '开始体验' : 'Get started'}>
-      <Reveal className={`campaign-finale-copy campaign-container ${glassClass}`}><p className="campaign-small-label">03 / YOUR NEXT CHAPTER</p><h2>{copy[3]}</h2><p>{product.finalCtaSubtitle}</p><div className="campaign-finale-actions"><button className={`campaign-button campaign-button--gateway ${pillClass}`} onClick={onVisit} disabled={isConnecting}>{actionLabel}<ArrowUpRight size={17} /></button>{productId === 'chat' && <button className="campaign-text-button" onClick={onApplyBeta}>{zh ? '申请内测资格' : 'Apply for beta'}<ArrowRight size={16} /></button>}</div></Reveal>
+      <Reveal className={`campaign-finale-copy campaign-container campaign-glass-frame ${glassClass}`}><p className="campaign-small-label">03 / YOUR NEXT CHAPTER</p><h2>{copy[3]}</h2><p>{product.finalCtaSubtitle}</p><div className="campaign-finale-actions"><button className={`campaign-button campaign-button--gateway liquid-glass liquid-specular-highlight ${pillClass}`} onClick={onVisit} disabled={isConnecting}>{actionLabel}<ArrowUpRight size={17} /></button>{productId === 'chat' && <button className="campaign-text-button" onClick={onApplyBeta}>{zh ? '申请内测资格' : 'Apply for beta'}<ArrowRight size={16} /></button>}</div></Reveal>
     </section>
 
     <nav className="campaign-collection campaign-container" aria-label={zh ? '继续探索产品' : 'Explore more products'}>
       <div className="campaign-section-label"><span>THE GONGPAN COLLECTION</span><Link to="/">{zh ? '全部产品' : 'All products'}<ArrowUpRight size={13} /></Link></div>
       <div className="campaign-collection-grid">{Object.keys(DIRECTION).filter(key => key !== productId).map(key => {
         const next = showcaseData[key][language] || showcaseData[key].zh;
-        return <Link to={`/showcase/${key}`} key={key} className="campaign-collection-link" onMouseEnter={() => preloadRoute(`/showcase/${key}`)} onFocus={() => preloadRoute(`/showcase/${key}`)}><div className={`campaign-collection-mark campaign-collection-mark--${key}`} aria-hidden="true"><span>{({pansou:'PAN / SOU','reading-pro':'READ.PRO','ai-agent':'AI / RESEARCH',chat:'HELLO, CHAT'})[key]}</span><small>GONGPAN COLLECTION</small></div><span>{next.title}<ArrowUpRight size={17} /></span></Link>;
+        const Icon = COLLECTION_ICONS[key];
+        const preload = () => preloadRoute(`/showcase/${key}`);
+        return (
+          <MotionLink
+            to={`/showcase/${key}`}
+            key={key}
+            className={`campaign-collection-card campaign-collection-card--${key} campaign-glass-frame ${glassClass}`}
+            onMouseEnter={preload}
+            onPointerDown={preload}
+            onFocus={preload}
+            whileHover={reduced ? undefined : { y: -6, scale: 1.015 }}
+            whileTap={reduced ? undefined : { y: 0, scale: .97 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 25 }}
+          >
+            <span className="campaign-collection-icon" aria-hidden="true"><Icon size={25} strokeWidth={1.5} /></span>
+            <span className="campaign-collection-copy"><small>{next.tag}</small><strong>{next.title}</strong></span>
+            <span className={`campaign-collection-arrow ${pillClass}`} aria-hidden="true"><ArrowUpRight size={18} /></span>
+          </MotionLink>
+        );
       })}</div>
     </nav>
   </main>;
