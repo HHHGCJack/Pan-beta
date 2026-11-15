@@ -434,7 +434,7 @@ interface SearchModalProps {
 }
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
-  const { themeMode, language, openProductNotice, isProductEnabled } = useTheme();
+  const { themeMode, language, openProductNotice, isProductEnabled, checkNavigation } = useTheme();
   const isDark = themeMode === 'dark';
   const navigate = useNavigate();
 
@@ -501,6 +501,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   }, [selectedIndex]);
 
   const handleSelect = (item: SearchItem) => {
+    if (!checkNavigation(item.href)) return;
     onClose();
 
     // Check if product is disabled

@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
+import { LinkSettings } from './LinkSettings';
 import { supabase } from '../src/lib/supabase';
 import { 
   DEFAULT_SUPPORT_QR, 
@@ -196,6 +197,7 @@ export const Admin: React.FC = () => {
   } = useTheme();
   const isDark = themeMode === 'dark';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<'manage' | 'upload' | 'settings'>('manage');
   
@@ -255,9 +257,10 @@ export const Admin: React.FC = () => {
         setMessage('正在将赞赏收款码同步上传到云端...');
         try {
           // 1. Upload to server API
+          const { data: { session } } = await supabase.auth.getSession();
           await fetch('/api/support-qr', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...(session ? { Authorization: `Bearer ${session.access_token}` } : {}) },
             body: JSON.stringify({ imageBase64: base64 })
           });
 
@@ -270,9 +273,10 @@ export const Admin: React.FC = () => {
           }
           const byteArray = new Uint8Array(byteNumbers);
           const blob = new Blob([byteArray], { type: 'image/jpeg' });
-          await supabase.storage
+          const { error } = await supabase.storage
             .from('books-media')
             .upload('custom-assets/support-qr.jpg', blob, { upsert: true, contentType: 'image/jpeg' });
+          if (error) throw error;
 
           setMessage('✅ 赞赏收款码已成功同步至云端，所有设备即时生效！');
         } catch (err: any) {
@@ -343,25 +347,28 @@ export const Admin: React.FC = () => {
     setIsLoadingBooks(false);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    let mounted = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (mounted) setIsAuthenticated(Boolean(data.session));
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (mounted) setIsAuthenticated(Boolean(session));
+    });
+    return () => { mounted = false; subscription.unsubscribe(); };
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Gc200902') {
-      setIsAuthenticated(true);
-      setMessage('');
-    } else {
-      setMessage('密码错误');
-    }
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    setPassword('');
+    setMessage(error ? '登录失败，请检查管理员账号和密码。' : '');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !cover || !pdf) {
       setMessage('请填写标题并上传封面和PDF文件。');
-      return;
-    }
-
-    if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
-      setMessage('系统未配置 Supabase 环境变量，无法上传。请参考提示配置。');
       return;
     }
 
@@ -547,7 +554,7 @@ export const Admin: React.FC = () => {
     setUpdatingKey('welcome');
     setMessage('正在同步「全站开屏欢迎弹窗」设置到云端...');
     try {
-      await setWelcomeModalEnabled(nextVal);
+      if (await setWelcomeModalEnabled(nextVal) === false) throw new Error('云端保存失败，请重试');
       setMessage(`全站开屏欢迎弹窗已${nextVal ? '开启展示' : '关闭静默'} (已全网跨设备生效)`);
     } catch (e: any) {
       setMessage(`更新失败: ${e?.message || '网络异常'}`);
@@ -564,7 +571,7 @@ export const Admin: React.FC = () => {
     setUpdatingKey(key);
     setMessage(`正在同步「${name}」状态到云端数据库...`);
     try {
-      await setProductEnabled(key, nextVal);
+      if (await setProductEnabled(key, nextVal) === false) throw new Error('云端保存失败，请重试');
       if (key === 'pansou') {
         setPansouEnabled(nextVal);
       }
@@ -617,11 +624,16 @@ export const Admin: React.FC = () => {
         {!isAuthenticated ? (
           <form onSubmit={handleLogin} className="space-y-6 max-w-sm mx-auto mt-12">
             <div>
+              <label htmlFor="admin-email" className="block text-sm font-semibold mb-2">管理员邮箱</label>
+              <input id="admin-email" type="email" autoComplete="username" value={email} onChange={e => setEmail(e.target.value)} className={getInputClasses()} required />
+            </div>
+            <div>
               <label className={`block text-sm font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>管理员密码</label>
               <div className="relative">
                 <Lock className={`absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isDark ? 'text-white/50' : 'text-gray-400'}`} />
                 <input 
-                  type="password" 
+                  type="password"
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className={`${getInputClasses()} pl-12`}
@@ -1123,6 +1135,8 @@ export const Admin: React.FC = () => {
 
                   </div>
                 </div>
+
+                <LinkSettings />
 
                 {/* Support QR Code Management */}
                 <div className={`p-6 rounded-2xl border ${

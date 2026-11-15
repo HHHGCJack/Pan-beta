@@ -22,7 +22,7 @@ import {
 import { BackButton } from './BackButton';
 
 export const Laboratory: React.FC = () => {
-  const { themeMode, language, showToast } = useTheme();
+  const { themeMode, language, showToast, checkNavigation, isNavigationEnabled } = useTheme();
   const location = useLocation();
   const selectedGame = new URLSearchParams(location.search).get('game');
   
@@ -31,11 +31,21 @@ export const Laboratory: React.FC = () => {
 
   // UI Tab Active State for Tools
   const [activeTab, setActiveTab] = useState<'glass' | 'json' | 'codec' | 'token'>('glass');
+  const selectCategory = (category: typeof activeCategory) => {
+    if (checkNavigation(`/laboratory?category=${category}`)) setActiveCategory(category);
+  };
+  const selectTool = (tab: typeof activeTab) => {
+    if (checkNavigation(`/laboratory?category=tools&tab=${tab}`)) setActiveTab(tab);
+  };
   const isDark = themeMode === 'dark';
 
   // Sync category with URL parameters or hash
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+    const requestedTab = params.get('tab');
+    if (['glass', 'json', 'codec', 'token'].includes(requestedTab || '')) {
+      setActiveTab(requestedTab as typeof activeTab);
+    }
     const cat = params.get('category') || params.get('tab');
     if (cat === 'games' || cat === 'game') {
       setActiveCategory('games');
@@ -505,7 +515,7 @@ export const Laboratory: React.FC = () => {
       {/* Top Category Switcher: "工具" vs "小游戏" */}
       <div className="flex items-center gap-3 mb-8 overflow-x-auto pb-1 scrollbar-none">
         <button
-          onClick={() => setActiveCategory('tools')}
+          onClick={() => selectCategory('tools')}
           className={`inline-flex items-center space-x-2.5 px-6 py-3 rounded-2xl border text-sm font-black transition-all cursor-pointer ${
             activeCategory === 'tools'
               ? isDark
@@ -528,7 +538,7 @@ export const Laboratory: React.FC = () => {
         </button>
 
         <button
-          onClick={() => setActiveCategory('games')}
+          onClick={() => selectCategory('games')}
           className={`inline-flex items-center space-x-2.5 px-6 py-3 rounded-2xl border text-sm font-black transition-all cursor-pointer ${
             activeCategory === 'games'
               ? isDark
@@ -566,28 +576,28 @@ export const Laboratory: React.FC = () => {
               {/* Navigation selection rail */}
         <div className="lg:col-span-3 flex flex-row lg:flex-col gap-2 p-1.5 rounded-3xl border border-white/20 backdrop-blur-md bg-white/5 overflow-x-auto lg:overflow-visible shrink-0 scrollbar-none">
           <button
-            onClick={() => setActiveTab('glass')}
+            onClick={() => selectTool('glass')}
             className={`flex items-center justify-center lg:justify-start space-x-3 px-5 py-3.5 rounded-2xl border text-sm font-bold transition-all flex-1 lg:flex-initial whitespace-nowrap ${tabItemClass('glass')}`}
           >
             <Layers size={18} />
             <span>{translations.tabs.glass}</span>
           </button>
           <button
-            onClick={() => setActiveTab('json')}
+            onClick={() => selectTool('json')}
             className={`flex items-center justify-center lg:justify-start space-x-3 px-5 py-3.5 rounded-2xl border text-sm font-bold transition-all flex-1 lg:flex-initial whitespace-nowrap ${tabItemClass('json')}`}
           >
             <Code size={18} />
             <span>{translations.tabs.json}</span>
           </button>
           <button
-            onClick={() => setActiveTab('codec')}
+            onClick={() => selectTool('codec')}
             className={`flex items-center justify-center lg:justify-start space-x-3 px-5 py-3.5 rounded-2xl border text-sm font-bold transition-all flex-1 lg:flex-initial whitespace-nowrap ${tabItemClass('codec')}`}
           >
             <FileText size={18} />
             <span>{translations.tabs.codec}</span>
           </button>
           <button
-            onClick={() => setActiveTab('token')}
+            onClick={() => selectTool('token')}
             className={`flex items-center justify-center lg:justify-start space-x-3 px-5 py-3.5 rounded-2xl border text-sm font-bold transition-all flex-1 lg:flex-initial whitespace-nowrap ${tabItemClass('token')}`}
           >
             <Terminal size={18} />
@@ -598,9 +608,10 @@ export const Laboratory: React.FC = () => {
         {/* Dynamic Display Area */}
         <div className="lg:col-span-9 w-full">
           <AnimatePresence mode="wait">
+            {!isNavigationEnabled(`/laboratory?category=tools&tab=${activeTab}`) && <p className="py-16 text-center text-gray-500">{language === 'zh' ? '此工具暂时暂停访问，请选择其他工具。' : 'This tool is temporarily unavailable.'}</p>}
             
             {/* TAB: GLASSMORPHISM */}
-            {activeTab === 'glass' && (
+            {activeTab === 'glass' && isNavigationEnabled('/laboratory?category=tools&tab=glass') && (
               <motion.div
                 key="glass-designer"
                 initial={{ opacity: 0, y: 15 }}
@@ -740,7 +751,7 @@ export const Laboratory: React.FC = () => {
             )}
 
             {/* TAB: JSON STYLER */}
-            {activeTab === 'json' && (
+            {activeTab === 'json' && isNavigationEnabled('/laboratory?category=tools&tab=json') && (
               <motion.div
                 key="json-styler"
                 initial={{ opacity: 0, y: 15 }}
@@ -835,7 +846,7 @@ export const Laboratory: React.FC = () => {
             )}
 
             {/* TAB: CODEC (Base64) */}
-            {activeTab === 'codec' && (
+            {activeTab === 'codec' && isNavigationEnabled('/laboratory?category=tools&tab=codec') && (
               <motion.div
                 key="codec-coder"
                 initial={{ opacity: 0, y: 15 }}
@@ -920,7 +931,7 @@ export const Laboratory: React.FC = () => {
             )}
 
             {/* TAB: SECURE KEY GENERATOR */}
-            {activeTab === 'token' && (
+            {activeTab === 'token' && isNavigationEnabled('/laboratory?category=tools&tab=token') && (
               <motion.div
                 key="secure-keygen"
                 initial={{ opacity: 0, y: 15 }}
@@ -1110,10 +1121,11 @@ export const Laboratory: React.FC = () => {
               <span className="text-[11px] text-gray-400">{translations.games.instantBadge}</span>
               <a href={game.url} target="_blank" rel="noopener noreferrer"
                 aria-label={`${translations.games.playBtn} · ${game.title}`}
+                aria-disabled={!isNavigationEnabled(game.url)}
                 className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border transition-all hover:-translate-y-0.5 active:scale-95 ${
                   isDark ? 'liquid-glass-pill-dark border-white/20 text-white' : 'liquid-glass-pill-light border-white text-gray-900'
                 }`}>
-                {translations.games.playBtn}<ArrowUpRight size={15} />
+                {isNavigationEnabled(game.url) ? translations.games.playBtn : (language === 'zh' ? '暂停访问' : 'Unavailable')}<ArrowUpRight size={15} />
               </a>
             </div>
           </motion.article>

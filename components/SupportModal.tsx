@@ -19,7 +19,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
   isOpen = false, 
   onClose 
 }) => {
-  const { themeMode, language } = useTheme();
+  const { themeMode, language, checkNavigation } = useTheme();
   const isDark = themeMode === 'dark';
   const [qrSourceIndex, setQrSourceIndex] = useState(0);
   const [qrImage, setQrImage] = useState<string>(() => {
@@ -84,6 +84,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({
 
   const handleDownload = async () => {
     const targetUrl = 'https://pic1.imgdb.cn/i/034BLlXycinjzppzDQlRoC.jpg';
+    if (!checkNavigation(targetUrl)) return;
     try {
       // Try fetching as Blob first so the browser directly prompts download
       const response = await fetch(targetUrl, { mode: 'cors' });

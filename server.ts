@@ -1,3 +1,4 @@
+import { normalizeSettings, settingsFromRows } from './src/utils/siteSettingsModel';
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -65,15 +66,7 @@ async function startServer() {
     res.setHeader("Expires", "0");
     res.setHeader("Surrogate-Control", "no-store");
 
-    let finalSettings = {
-      welcomeModalEnabled: false,
-      productsEnabled: {
-        'pansou': true,
-        'reading-pro': true,
-        'ai-agent': true,
-        'chat': true,
-      }
-    };
+    let finalSettings = normalizeSettings();
 
     // 1. Try reading from Supabase for absolute cross-device truth
     try {
@@ -82,22 +75,7 @@ async function startServer() {
         .select("id, value");
 
       if (!error && Array.isArray(dbRows) && dbRows.length > 0) {
-        const map: Record<string, boolean> = {};
-        dbRows.forEach((r: any) => {
-          if (r && typeof r.id === "string") {
-            map[r.id] = Boolean(r.value);
-          }
-        });
-
-        finalSettings = {
-          welcomeModalEnabled: map["welcome_modal_enabled"] ?? true,
-          productsEnabled: {
-            "pansou": map["pansou_enabled"] ?? true,
-            "reading-pro": map["reading_pro_enabled"] ?? true,
-            "ai-agent": map["ai_agent_enabled"] ?? true,
-            "chat": map["chat_enabled"] ?? true,
-          }
-        };
+        finalSettings = settingsFromRows(dbRows);
 
         // Sync to local file as backup cache
         try {
@@ -128,10 +106,15 @@ async function startServer() {
   // Update dynamic site settings
   app.post("/api/settings", async (req, res) => {
     try {
-      const newSettings = req.body;
-      if (!newSettings || typeof newSettings !== "object") {
+      const adminId = process.env.ADMIN_USER_ID;
+      const token = req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1];
+      if (!adminId || !token) return res.status(401).json({ error: "Administrator authentication required" });
+      const { data, error } = await serverSupabase.auth.getUser(token);
+      if (error || data.user?.id !== adminId) return res.status(403).json({ error: "Administrator access required" });
+      if (!req.body || typeof req.body !== "object" || Array.isArray(req.body)) {
         return res.status(400).json({ error: "Invalid settings payload" });
       }
+      const newSettings = normalizeSettings(req.body);
 
       const publicDir = path.join(process.cwd(), "public");
       if (!fs.existsSync(publicDir)) {
@@ -182,6 +165,11 @@ async function startServer() {
   // Upload exact original support QR code (With payload and magic byte verification)
   app.post("/api/support-qr", async (req, res) => {
     try {
+      const adminId = process.env.ADMIN_USER_ID;
+      const token = req.headers.authorization?.match(/^Bearer (.+)$/i)?.[1];
+      if (!adminId || !token) return res.status(401).json({ error: "Administrator authentication required" });
+      const { data, error } = await serverSupabase.auth.getUser(token);
+      if (error || data.user?.id !== adminId) return res.status(403).json({ error: "Administrator access required" });
       const { imageBase64 } = req.body;
       if (!imageBase64 || typeof imageBase64 !== "string") {
         return res.status(400).json({ error: "Missing or invalid imageBase64 payload" });

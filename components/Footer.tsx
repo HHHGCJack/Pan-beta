@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Github, Mail } from 'lucide-react';
+import { X, Github, Users, MessageCircle, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme } from '../App';
 import { preloadWelcomeModal, preloadSupportModal } from '../src/utils/preload';
@@ -8,7 +8,18 @@ type ModalType = 'privacy' | 'terms' | 'contact' | null;
 
 export const Footer: React.FC = () => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
-  const { themeMode, language, openWelcomeModal, openSupportModal } = useTheme();
+  const [copiedContact, setCopiedContact] = useState('');
+  const { themeMode, language, openWelcomeModal, openSupportModal, showToast } = useTheme();
+
+  const copyContact = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedContact(value);
+      window.setTimeout(() => setCopiedContact(''), 2000);
+    } catch {
+      showToast(language === 'zh' ? '复制失败，请手动复制' : 'Copy failed. Please copy manually.');
+    }
+  };
 
   const isDark = themeMode === 'dark';
 
@@ -18,7 +29,7 @@ export const Footer: React.FC = () => {
       updates: '更新公告 & 介绍',
       privacy: '隐私政策',
       terms: '服务条款',
-      contact: '联系我',
+      contact: '联系我们',
       contactDesc: '随时欢迎交流与反馈',
       privacyContent: [
         '我们非常重视您的隐私。本网站（G胖儿GongPan）目前不收集任何个人身份信息。所有的资源链接均为直接跳转。',
@@ -290,18 +301,22 @@ export const Footer: React.FC = () => {
                       <p className={`text-xs sm:text-sm mb-6 max-w-sm mx-auto leading-relaxed ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>{t.contactDesc}</p>
                       
                       <div className="space-y-3">
-                        <a 
-                          href="mailto:3387287031@qq.com" 
-                          className={`flex items-center p-3.5 sm:p-4 rounded-2xl group ${itemCardStyle}`}
-                        >
-                          <div className={`p-2.5 sm:p-3 rounded-xl mr-3.5 group-hover:scale-105 transition-transform ${isDark ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-blue-50 text-blue-600 border border-blue-200'}`}>
-                            <Mail size={18} />
+                        {[
+                          { label: language === 'zh' ? '加入官方 QQ 群' : 'Join our QQ group', value: '991366619', icon: Users },
+                          { label: language === 'zh' ? '微信搜索公众号' : 'WeChat official account', value: 'G胖儿GongPan', icon: MessageCircle },
+                        ].map(({ label, value, icon: Icon }) => (
+                          <div key={value} className={`flex items-center p-3.5 sm:p-4 rounded-2xl ${itemCardStyle}`}>
+                            <div className="p-2.5 sm:p-3 rounded-xl mr-3.5 bg-blue-500/10 text-blue-500 shrink-0"><Icon size={18} /></div>
+                            <div className="text-left min-w-0 flex-1">
+                              <div className="text-[10px] font-bold text-gray-500">{label}</div>
+                              <div className="text-sm font-semibold select-all">{value}</div>
+                            </div>
+                            <button type="button" onClick={() => copyContact(value)} className={`px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 ${isDark ? 'liquid-glass-pill-dark' : 'liquid-glass-pill-light'}`} aria-label={`${language === 'zh' ? '复制' : 'Copy'} ${label}`}>
+                              {copiedContact === value ? <Check size={14} /> : <Copy size={14} />}
+                              {copiedContact === value ? (language === 'zh' ? '已复制' : 'Copied') : (language === 'zh' ? '复制' : 'Copy')}
+                            </button>
                           </div>
-                          <div className="text-left overflow-hidden">
-                            <div className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>Email</div>
-                            <div className="text-sm font-semibold truncate">3387287031@qq.com</div>
-                          </div>
-                        </a>
+                        ))}
 
                         <a 
                           href="https://github.com/gongpan" 

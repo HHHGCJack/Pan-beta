@@ -77,17 +77,17 @@ export async function probeNodeHealth(url: string, timeoutMs = 2400): Promise<Pr
 }
 
 // Probe both HTTPS routes concurrently, then choose the fastest reachable route.
-export async function resolveBestPansouNode(): Promise<{ node: PansouNode; isFallback: boolean; latency: number }> {
-  const results = await Promise.all(PANSOU_NODES.map(async (node) => ({ node, ...await probeNodeHealth(node.url) })));
-  const best = results.filter(result => result.healthy).sort((a, b) => a.latency - b.latency)[0];
+export async function resolveBestPansouNode(nodes: PansouNode[] = PANSOU_NODES, isAllowed: (url: string) => boolean = () => true): Promise<{ node: PansouNode; isFallback: boolean; latency: number }> {
+  const results = await Promise.all(nodes.filter(node => isAllowed(node.url)).map(async (node) => ({ node, ...await probeNodeHealth(node.url) })));
+  const best = results.filter(result => result.healthy && isAllowed(result.node.url)).sort((a, b) => a.latency - b.latency)[0];
   if (!best) throw new Error('No reachable Pansou routes');
   return { node: best.node, isFallback: !best.node.isPrimary, latency: best.latency };
 }
 
 let pendingLaunch: Promise<void> | null = null;
-export function openBestPansouNode(): Promise<void> {
+export function openBestPansouNode(nodes: PansouNode[] = PANSOU_NODES, isAllowed: (url: string) => boolean = () => true): Promise<void> {
   if (pendingLaunch) return pendingLaunch;
-  pendingLaunch = resolveBestPansouNode()
+  pendingLaunch = resolveBestPansouNode(nodes, isAllowed)
     .then(({ node }) => { window.location.assign(node.url); })
     .finally(() => { pendingLaunch = null; });
   return pendingLaunch;

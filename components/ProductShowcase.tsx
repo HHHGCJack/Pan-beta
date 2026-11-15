@@ -1,27 +1,21 @@
+import { normalizeShowcaseId } from '../src/data/navigationLinks';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Lock } from 'lucide-react';
 import { useTheme } from '../App';
 import { showcaseData } from '../src/data/showcases';
-import { openBestPansouNode } from '../src/utils/pansouRouter';
+import { openBestPansouNode, PANSOU_NODES } from '../src/utils/pansouRouter';
 import { preloadRoute } from '../src/utils/preload';
 import { ProductVisualStory } from './ProductVisualStory';
 import { BetaApplyModal } from './BetaApplyModal';
 
-const normalizeCategoryId = (raw = 'pansou') => {
-  const id = raw.toLowerCase().trim();
-  if (['pansou', 'pan', 'search', 'resource', 'wangpan'].includes(id)) return 'pansou';
-  if (['reading-pro', 'readingpro', 'reading', 'journal', 'waikan'].includes(id)) return 'reading-pro';
-  if (['ai-agent', 'ai', 'agent', 'invest', 'quant'].includes(id)) return 'ai-agent';
-  if (['chat', 'gongpan-chat', 'im', 'telegram', 'messenger'].includes(id)) return 'chat';
-  return 'pansou';
-};
+
 
 export const ProductShowcase: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { themeMode, language, showToast, pansouEnabled, isProductEnabled, openProductNotice } = useTheme();
-  const categoryId = normalizeCategoryId(id);
+  const { themeMode, language, showToast, pansouEnabled, isProductEnabled, openProductNotice, checkNavigation, isNavigationEnabled } = useTheme();
+  const categoryId = normalizeShowcaseId(id || 'pansou');
   const product = showcaseData[categoryId][language] || showcaseData[categoryId].zh;
   const isEnabled = isProductEnabled ? isProductEnabled(categoryId) : true;
   const [betaApplyModalOpen, setBetaApplyModalOpen] = useState(false);
@@ -43,10 +37,15 @@ export const ProductShowcase: React.FC = () => {
       showToast(language === 'zh' ? '因政策原因暂停服务' : 'Service is currently suspended');
       return;
     }
+    if (categoryId !== 'pansou' && !checkNavigation(product.targetUrl)) return;
     if (categoryId === 'pansou') {
+      if (!PANSOU_NODES.some(node => isNavigationEnabled(node.url))) {
+        showToast(language === 'zh' ? '网盘搜索线路暂停访问' : 'Search routes are temporarily unavailable');
+        return;
+      }
       setIsConnecting(true);
       showToast(language === 'zh' ? '正在检测可用线路…' : 'Checking available routes…');
-      try { await openBestPansouNode(); }
+      try { await openBestPansouNode(PANSOU_NODES, isNavigationEnabled); }
       catch { showToast(language === 'zh' ? '暂时无法连接两条线路，请稍后重试' : 'Both routes are unreachable. Please try again shortly.'); }
       finally { setIsConnecting(false); }
       return;

@@ -1,5 +1,7 @@
-import React, { useState, createContext, useContext, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useRef, createContext, useContext, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { NavigationAccess } from './components/NavigationAccess';
+import { getBlockedNavigationLink } from './src/data/navigationLinks';
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { Home } from './components/Home';
@@ -7,7 +9,9 @@ import { ThemeContextType, ThemeMode, Language } from './types';
 import { supabase } from './src/lib/supabase';
 import { 
   getStoredSettings, 
-  saveServerSettings, 
+  saveServerSettings,
+  saveLinkSetting,
+  saveSettingsLocal,
   fetchServerSettings, 
   SETTINGS_EVENT, 
   SiteSettings, 
@@ -50,6 +54,10 @@ export const ThemeContext = createContext<ThemeContextType>({
   },
   setProductEnabled: () => {},
   isProductEnabled: () => true,
+  linksEnabled: {},
+  setLinkEnabled: async () => false,
+  isNavigationEnabled: () => true,
+  checkNavigation: () => true,
 });
 
 // Use Context Hook
@@ -226,6 +234,30 @@ function App() {
   const isProductEnabled = (key: string): boolean => {
     if (key === 'pansou' && !pansouEnabled) return false;
     return siteSettings.productsEnabled[key as ProductKey] ?? true;
+  };
+
+  const setLinkEnabled = async (key: string, enabled: boolean): Promise<boolean> => {
+    await saveLinkSetting(key, enabled);
+    const current = getStoredSettings();
+    const next = { ...current, linksEnabled: { ...current.linksEnabled, [key]: enabled } };
+    setSiteSettings(next);
+    saveSettingsLocal(next);
+    return true;
+  };
+
+  const navigationSettings = useRef(siteSettings);
+  navigationSettings.current = { ...siteSettings, productsEnabled: { ...siteSettings.productsEnabled, pansou: isProductEnabled('pansou') } };
+  const blockedNavigation = (href: string) => getBlockedNavigationLink(
+    href, navigationSettings.current.linksEnabled,
+    navigationSettings.current.productsEnabled,
+    window.location.origin,
+  );
+  const isNavigationEnabled = (href: string) => !blockedNavigation(href);
+  const checkNavigation = (href: string) => {
+    const blocked = blockedNavigation(href);
+    if (!blocked) return true;
+    showToast(language === 'zh' ? `${blocked.name} 暂停访问` : 'This destination is temporarily unavailable');
+    return false;
   };
 
   // Sync settings from server and listen to custom updates across devices
@@ -538,7 +570,11 @@ function App() {
       setWelcomeModalEnabled,
       productsEnabled: siteSettings.productsEnabled,
       setProductEnabled,
-      isProductEnabled
+      isProductEnabled,
+      linksEnabled: siteSettings.linksEnabled,
+      setLinkEnabled,
+      isNavigationEnabled,
+      checkNavigation
     }}>
       <div className={`min-h-screen flex flex-col font-sans selection:bg-blue-500/30 transition-colors duration-300 relative ${themeMode === 'dark' ? 'bg-[#09090b] text-white' : 'bg-[#f6f7fa] text-black'}`}>
         
@@ -596,15 +632,17 @@ function App() {
           />
           
           <div className="flex-grow flex flex-col">
-            <Suspense fallback={<div className="flex-grow min-h-[50vh]" />}>
-              <Routes location={location}>
-                <Route path="/" element={<Home />} />
-                <Route path="/showcase/:id" element={<ProductShowcase />} />
-                <Route path="/reading-pro" element={<ReadingPro />} />
-                <Route path="/laboratory" element={<Laboratory />} />
-                <Route path="/admin" element={<Admin />} />
-              </Routes>
-            </Suspense>
+            <NavigationAccess>
+              <Suspense fallback={<div className="flex-grow min-h-[50vh]" />}>
+                <Routes location={location}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/showcase/:id" element={<ProductShowcase />} />
+                  <Route path="/reading-pro" element={<ReadingPro />} />
+                  <Route path="/laboratory" element={<Laboratory />} />
+                  <Route path="/admin" element={<Admin />} />
+                </Routes>
+              </Suspense>
+            </NavigationAccess>
           </div>
 
           <Footer />

@@ -1,4 +1,4 @@
-import { openBestPansouNode } from '../src/utils/pansouRouter';
+import { openBestPansouNode, PANSOU_NODES } from '../src/utils/pansouRouter';
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -37,7 +37,9 @@ export const Navbar: React.FC = () => {
     openSupportModal, 
     openSearchModal,
     isProductEnabled,
-    openProductNotice
+    openProductNotice,
+    checkNavigation,
+    isNavigationEnabled
   } = useTheme();
   const { startCollapse, status } = useCardTransition();
   const location = useLocation();
@@ -45,6 +47,7 @@ export const Navbar: React.FC = () => {
 
   const handleBackToHome = (e?: React.MouseEvent) => {
     if (e) e.preventDefault();
+    if (!checkNavigation('/')) return;
     navigate('/');
   };
 
@@ -456,11 +459,16 @@ export const Navbar: React.FC = () => {
       return;
     }
     if (currentShowcase.requiresPansouCheck) {
+      if (!PANSOU_NODES.some(node => isNavigationEnabled(node.url))) {
+        showToast(language === 'zh' ? '网盘搜索线路暂停访问' : 'Search routes are temporarily unavailable');
+        return;
+      }
       showToast(language === 'zh' ? '正在检测可用线路…' : 'Checking available routes…');
-      try { await openBestPansouNode(); }
+      try { await openBestPansouNode(PANSOU_NODES, isNavigationEnabled); }
       catch { showToast(language === 'zh' ? '暂时无法连接两条线路，请稍后重试' : 'Both routes are unreachable. Please try again shortly.'); }
       return;
     }
+    if (!checkNavigation(currentShowcase.targetUrl)) return;
     if (currentShowcase.isExternal) {
       window.location.href = currentShowcase.targetUrl;
     } else {

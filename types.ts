@@ -51,4 +51,8 @@ export interface ThemeContextType {
   productsEnabled: Record<string, boolean>;
   setProductEnabled: (key: string, enabled: boolean) => Promise<boolean> | void;
   isProductEnabled: (key: string) => boolean;
+  linksEnabled: Record<string, boolean>;
+  setLinkEnabled: (key: string, enabled: boolean) => Promise<boolean>;
+  isNavigationEnabled: (href: string) => boolean;
+  checkNavigation: (href: string) => boolean;
 }

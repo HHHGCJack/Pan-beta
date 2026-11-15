@@ -90,3 +90,19 @@ test('repeated launch clicks share one probe batch and one navigation', async ()
     else globalThis.window = originalWindow;
   }
 });
+
+test('disabled routes are never probed or selected', async () => {
+  const probed = [];
+  await withFetch(async url => { probed.push(url); return { type: 'opaque' }; }, async router => {
+    const result = await router.resolveBestPansouNode(router.PANSOU_NODES, url => url.includes('pansou.app'));
+    assert.equal(result.node.id, 'backup1');
+    assert.deepEqual(probed, ['https://pansou.app/']);
+  });
+});
+
+test('a route switched off while probing cannot be selected afterwards', async () => {
+  let enabled = true;
+  await withFetch(async () => { enabled = false; return { type: 'opaque' }; }, async router => {
+    await assert.rejects(router.resolveBestPansouNode(router.PANSOU_NODES, () => enabled), /No reachable/);
+  });
+});
